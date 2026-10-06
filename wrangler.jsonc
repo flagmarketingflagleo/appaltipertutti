@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Nome del Worker su Cloudflare. L'indirizzo di prova diventa
+  // appaltipertutti.<tuo-sottodominio>.workers.dev
+  "name": "appaltipertutti",
+  // vite build produce dist/server/server.js (il sito) e dist/client (i file statici).
+  "main": "dist/server/server.js",
+  "compatibility_date": "2025-05-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // I file statici vengono serviti per primi e non costano richieste al Worker;
+  // tutto il resto passa dal Worker, che disegna la pagina.
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "not_found_handling": "none"
+  }
+}

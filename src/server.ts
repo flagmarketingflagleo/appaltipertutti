@@ -43,8 +43,11 @@ export default {
     try {
       // Un solo indirizzo per pagina: /prezzi/ diventa /prezzi.
       const url = new URL(request.url);
-      if (url.pathname !== "/" && url.pathname.endsWith("/")) {
-        url.pathname = url.pathname.replace(/\/+$/, "");
+      const conWww = url.hostname.startsWith("www.");
+      // Un solo indirizzo anche per il dominio: www.appaltipertutti.it diventa appaltipertutti.it.
+      if (conWww) url.hostname = url.hostname.slice(4);
+      if (conWww || (url.pathname !== "/" && url.pathname.endsWith("/"))) {
+        if (url.pathname !== "/") url.pathname = url.pathname.replace(/\/+$/, "");
         return applySecurityHeaders(
           new Response(null, { status: 301, headers: { Location: url.toString() } }),
         );

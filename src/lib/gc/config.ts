@@ -1,6 +1,6 @@
 export const SITE = {
   name: "Appalti per tutti",
-  url: "https://appaltipertutti.higgsfield.app",
+  url: "https://appaltipertutti.it",
   title: "Appalti per tutti: le gare pubbliche, scritte chiare",
   description:
     "Scrivi cosa fa la tua impresa e trova le gare d'appalto adatte, con i quattro dati che contano: cosa chiedono, chi compra, quanto vale, entro quando.",

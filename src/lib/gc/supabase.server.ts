@@ -13,6 +13,8 @@ export async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Pr
       "Content-Type": "application/json",
     },
     body: JSON.stringify(args),
+    // Se il database non risponde entro 8 secondi la pagina mostra l'errore invece di restare appesa.
+    signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) {
     const text = await res.text();

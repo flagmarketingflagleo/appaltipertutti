@@ -46,7 +46,11 @@ export default {
       const conWww = url.hostname.startsWith("www.");
       // Un solo indirizzo anche per il dominio: www.appaltipertutti.it diventa appaltipertutti.it.
       if (conWww) url.hostname = url.hostname.slice(4);
-      if (conWww || (url.pathname !== "/" && url.pathname.endsWith("/"))) {
+      // Sempre in https (tranne quando il sito gira in prova su questo computer).
+      const locale = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+      const senzaHttps = url.protocol === "http:" && !locale;
+      if (senzaHttps) url.protocol = "https:";
+      if (conWww || senzaHttps || (url.pathname !== "/" && url.pathname.endsWith("/"))) {
         if (url.pathname !== "/") url.pathname = url.pathname.replace(/\/+$/, "");
         return applySecurityHeaders(
           new Response(null, { status: 301, headers: { Location: url.toString() } }),

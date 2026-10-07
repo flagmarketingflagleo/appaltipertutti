@@ -8,6 +8,14 @@
   "compatibility_date": "2025-05-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  // I due indirizzi del sito. Cloudflare crea da solo i record DNS e i certificati.
+  // Il www viene poi rimandato al dominio senza www dal codice (src/server.ts).
+  "routes": [
+    { "pattern": "appaltipertutti.it", "custom_domain": true },
+    { "pattern": "www.appaltipertutti.it", "custom_domain": true }
+  ],
+  // L'indirizzo di prova *.workers.dev resta acceso (non viene indicizzato).
+  "workers_dev": true,
   // I file statici vengono serviti per primi e non costano richieste al Worker;
   // tutto il resto passa dal Worker, che disegna la pagina.
   "assets": {

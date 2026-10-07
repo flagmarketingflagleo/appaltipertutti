@@ -79,14 +79,16 @@ export default {
       const conWww = url.hostname.startsWith("www.");
       // Un solo indirizzo anche per il dominio: www.appaltipertutti.it diventa appaltipertutti.it.
       if (conWww) url.hostname = url.hostname.slice(4);
-      // Sempre in https (tranne quando il sito gira in prova su questo computer).
-      const locale = url.hostname === "localhost" || url.hostname === "127.0.0.1";
-      const senzaHttps = url.protocol === "http:" && !locale;
-      if (senzaHttps) url.protocol = "https:";
+      // Sempre in https. Lo schema vero lo dice Cloudflare nell'intestazione cf-visitor;
+      // in prova sul computer quell'intestazione manca e non si rimanda da nessuna parte.
+      const visitatore = request.headers.get("cf-visitor") ?? "";
+      const senzaHttps = visitatore.includes('"http"');
       if (conWww || senzaHttps || (url.pathname !== "/" && url.pathname.endsWith("/"))) {
         if (url.pathname !== "/") url.pathname = url.pathname.replace(/\/+$/, "");
+        const schema = senzaHttps ? "https:" : url.protocol;
+        const destinazione = `${schema}//${url.host}${url.pathname}${url.search}`;
         return applySecurityHeaders(
-          new Response(null, { status: 301, headers: { Location: url.toString() } }),
+          new Response(null, { status: 301, headers: { Location: destinazione } }),
         );
       }
       const copie = request.method === "GET" && conCopia(url) ? copieCloudflare() : null;

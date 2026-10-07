@@ -31,10 +31,11 @@ const DEFAULT_SETTINGS: PublicSettings = {
   legal: { ragione_sociale: null, piva: null, sede: null, email: null },
   contactEmail: null,
   plans: DEFAULT_PLANS,
+  tagId: null,
 };
 
 type RawSettings = {
-  site?: { contact_email?: string | null };
+  site?: { contact_email?: string | null; tag_id?: string | null };
   legal?: Partial<PublicSettings["legal"]>;
   plans?: Partial<Plans>;
   signup_enabled?: boolean;
@@ -43,6 +44,11 @@ type RawSettings = {
 
 function txt(v: unknown): string | null {
   return typeof v === "string" && v.trim() !== "" ? v.trim() : null;
+}
+
+function tagId(v: unknown): string | null {
+  const s = typeof v === "string" ? v.trim().toUpperCase() : "";
+  return /^(GTM-[A-Z0-9]{4,12}|G-[A-Z0-9]{6,14})$/.test(s) ? s : null;
 }
 
 function safeLink(v: unknown): string | null {
@@ -93,6 +99,7 @@ function normalizeSettings(raw: RawSettings | null): PublicSettings {
       portal: safeLink(raw.plans?.portal),
       paddle: token ? { token, sandbox: token.toLowerCase().startsWith("test_") } : null,
     },
+    tagId: tagId(raw.site?.tag_id),
   };
 }
 

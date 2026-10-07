@@ -260,3 +260,14 @@ body.gc {
 .gc-altro { border-top: 1px solid var(--riga, #d5dae6); padding-top: 0.9rem; }
 .gc-altro > summary { cursor: pointer; font-weight: 700; }
 .gc-altro__corpo { display: grid; gap: 1rem; margin-top: 0.9rem; }
+
+/* Banner del consenso (statistiche e pubblicità) */
+.gc-consenso { position: fixed; inset: auto 0 0 0; z-index: 60; padding: 0 var(--lato) max(1rem, env(safe-area-inset-bottom)); pointer-events: none; }
+.gc-consenso__in { pointer-events: auto; max-width: 44rem; margin: 0 auto; background: var(--foglio); color: var(--inchiostro); border: 1px solid var(--riga); border-top: 4px solid var(--evidenziatore); box-shadow: 0 10px 30px rgba(27, 37, 89, 0.18); padding: 1.1rem 1.25rem; font-size: var(--t-s); line-height: 1.5; }
+.gc-consenso__in p { margin: 0 0 0.75rem; }
+.gc-consenso__titolo { font-weight: 800; font-size: var(--t-m); }
+.gc-consenso__scelte { display: grid; gap: 0.35rem; margin: 0 0 0.9rem; }
+.gc-consenso__scelte label { display: flex; gap: 0.5rem; align-items: center; }
+.gc-consenso__azioni { display: flex; flex-wrap: wrap; gap: 0.6rem 0.9rem; align-items: center; }
+.gc-btn--secondario { background: var(--foglio); color: var(--inchiostro); border: 1px solid var(--bordo-campo); }
+.gc-collegamento { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }

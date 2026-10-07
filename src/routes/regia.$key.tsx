@@ -89,6 +89,7 @@ function Regia() {
   const [open, setOpen] = useState(s.signup_enabled !== false);
   const [contact, setContact] = useState(s.site?.contact_email ?? "");
   const [from, setFrom] = useState(s.site?.email_from ?? "");
+  const [tagId, setTagId] = useState(s.site?.tag_id ?? "");
   const [resend, setResend] = useState("");
   const [stripe, setStripe] = useState("");
   const [pm, setPm] = useState(plans?.pro.link_month ?? "");
@@ -145,7 +146,7 @@ function Regia() {
     e.preventDefault();
     void save(
       "email",
-      { site: { ...(s.site ?? {}), contact_email: clean(contact), email_from: clean(from) } },
+      { site: { ...(s.site ?? {}), contact_email: clean(contact), email_from: clean(from), tag_id: clean(tagId) } },
       resend.trim() ? { resend: resend.trim() } : undefined,
     );
   }
@@ -334,6 +335,18 @@ function Regia() {
               onChange={setFrom}
               placeholder="Appalti per tutti <avvisi@tuodominio.it>"
               hint="Deve usare un dominio verificato su Resend."
+            />
+            <Campo
+              id="e-tag"
+              label="Codice Google Tag Manager o Analytics"
+              value={tagId}
+              onChange={setTagId}
+              placeholder="GTM-XXXXXXX oppure G-XXXXXXXXXX"
+              hint={
+                tagId.trim() !== "" && !/^(GTM-[A-Z0-9]{4,12}|G-[A-Z0-9]{6,14})$/i.test(tagId.trim())
+                  ? "Il codice non sembra valido: inizia con GTM- oppure con G-."
+                  : "Appena salvato, il sito mostra il banner dei cookie e manda a Google gli eventi: ricerche, schede, radar attivati, pagamenti. Lascia vuoto per non usare Google."
+              }
             />
             <Campo
               id="e-resend"

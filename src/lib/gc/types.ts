@@ -129,6 +129,8 @@ export type PublicSettings = {
   legal: Legal;
   contactEmail: string | null;
   plans: Plans;
+  /** codice di Google Tag Manager (GTM-…) o di Google Analytics (G-…), se configurato */
+  tagId: string | null;
 };
 
 export type RadarProfile = {
@@ -159,7 +161,7 @@ export type RadarOk = {
 export type RadarData = RadarOk | { ok: false; error?: string };
 
 export type AdminSettings = {
-  site?: { name?: string; url?: string; contact_email?: string | null; email_from?: string | null };
+  site?: { name?: string; url?: string; contact_email?: string | null; email_from?: string | null; tag_id?: string | null };
   legal?: Legal;
   plans?: Plans;
   signup_enabled?: boolean;

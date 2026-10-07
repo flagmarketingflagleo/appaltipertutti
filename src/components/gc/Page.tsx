@@ -1,6 +1,7 @@
 import { Link, getRouteApi } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import { apriPreferenze } from "@/lib/gc/analytics";
 import type { PublicSettings } from "@/lib/gc/types";
 
 const rootApi = getRouteApi("__root__");
@@ -18,7 +19,7 @@ export function Logo() {
 }
 
 export function Page({ children }: { children: ReactNode }) {
-  const { legal } = useSettings();
+  const { legal, tagId } = useSettings();
   const identity = [
     legal.ragione_sociale,
     legal.piva ? `partita IVA ${legal.piva}` : null,
@@ -64,6 +65,11 @@ export function Page({ children }: { children: ReactNode }) {
             <Link to="/privacy">Privacy</Link>
             <Link to="/termini">Termini</Link>
             <Link to="/rimborsi">Rimborsi</Link>
+            {tagId ? (
+              <button type="button" className="gc-collegamento" onClick={apriPreferenze}>
+                Cookie
+              </button>
+            ) : null}
           </nav>
         </div>
       </footer>

@@ -8,13 +8,19 @@ import {
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import { Consenso } from "../components/gc/Consenso";
 import gcCss from "../gc.css?url";
+import { scriptGoogle } from "../lib/gc/analytics";
 import { getSettings } from "../lib/gc/api.functions";
 import { SITE } from "../lib/gc/config";
+import type { PublicSettings } from "../lib/gc/types";
 
-function buildHead() {
+function buildHead(settings: PublicSettings | undefined) {
   const ogImage = `${SITE.url}/og.png`;
+  // Statistiche e pubblicità (Google) solo se nella regia è stato inserito un codice.
+  const scripts = settings?.tagId ? [{ children: scriptGoogle(settings.tagId) }] : [];
   return {
+    scripts,
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -88,7 +94,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => buildHead(),
+  head: ({ loaderData }) => buildHead(loaderData?.settings),
   loader: async () => ({ settings: await getSettings() }),
   staleTime: 120_000,
   shellComponent: RootShell,
@@ -113,11 +119,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const { settings } = Route.useLoaderData();
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* I percorsi figli vengono disegnati qui. */}
       <Outlet />
+      <Consenso attivo={settings.tagId !== null} />
     </QueryClientProvider>
   );
 }

@@ -6,6 +6,7 @@ import { Registro } from "@/components/gc/Registro";
 import { getRadar, radarAction, saveRadar } from "@/lib/gc/api.functions";
 import { CATEGORIES, MIN_VALUES, REGIONS, SITE } from "@/lib/gc/config";
 import { fmtInt, plural } from "@/lib/gc/format";
+import { traccia } from "@/lib/gc/analytics";
 import { closeCheckout, onPaddleEvent, openCheckout } from "@/lib/gc/paddle";
 import type { Card, RadarData, RadarOk, RadarProfile } from "@/lib/gc/types";
 
@@ -376,6 +377,21 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
 
   // Dopo il pagamento Paddle avvisa il sito in pochi secondi: nel frattempo la pagina si ricarica da sola.
   const [waiting, setWaiting] = useState<"no" | "attesa" | "lunga">("no");
+  // L'acquisto in corso, per segnalare il pagamento riuscito con il suo importo.
+  const [acquisto, setAcquisto] = useState<{ priceId: string; piano: string; valore: number } | null>(null);
+
+  // Radar appena attivato (il modulo lascia un segno prima di arrivare qui).
+  useEffect(() => {
+    try {
+      const origine = window.sessionStorage.getItem("apt-nuovo-radar");
+      if (origine !== null) {
+        window.sessionStorage.removeItem("apt-nuovo-radar");
+        traccia("sign_up", { method: "radar", origine });
+      }
+    } catch {
+      // nessuna memoria di sessione: niente da segnalare
+    }
+  }, []);
 
   useEffect(() => {
     return onPaddleEvent((event) => {
@@ -389,6 +405,15 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
     if (paid) {
       setWaiting("no");
       closeCheckout();
+      if (acquisto) {
+        traccia("purchase", {
+          transaction_id: `${subscriber.id}-${Date.now()}`,
+          value: acquisto.valore,
+          currency: "EUR",
+          items: [{ item_id: acquisto.priceId, item_name: acquisto.piano, price: acquisto.valore, quantity: 1 }],
+        });
+        setAcquisto(null);
+      }
       return;
     }
     let tries = 0;
@@ -402,12 +427,27 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
       void router.invalidate();
     }, 4000);
     return () => window.clearInterval(timer);
-  }, [waiting, paid, router]);
+  }, [waiting, paid, router, acquisto, subscriber.id]);
+
+  function offerta(priceId: string): { piano: string; valore: number } {
+    const { pro, studio } = plans;
+    if (priceId === pro.paddle_month) return { piano: "Pro mensile", valore: pro.price_month };
+    if (priceId === pro.paddle_year) return { piano: "Pro annuale", valore: pro.price_year };
+    if (priceId === studio.paddle_month) return { piano: "Studio mensile", valore: studio.price_month };
+    return { piano: "Studio annuale", valore: studio.price_year };
+  }
 
   async function buy(priceId: string) {
     if (!plans.paddle) return;
     setBusy(true);
     setNote(null);
+    const o = offerta(priceId);
+    setAcquisto({ priceId, ...o });
+    traccia("begin_checkout", {
+      value: o.valore,
+      currency: "EUR",
+      items: [{ item_id: priceId, item_name: o.piano, price: o.valore, quantity: 1 }],
+    });
     try {
       await openCheckout(plans.paddle, priceId, subscriber.id, subscriber.email);
     } catch {

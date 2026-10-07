@@ -1,8 +1,10 @@
 import { Link, createFileRoute, notFound, redirect } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import { Page } from "@/components/gc/Page";
 import { RadarForm } from "@/components/gc/RadarForm";
 import { Registro } from "@/components/gc/Registro";
+import { traccia } from "@/lib/gc/analytics";
 import { getTender } from "@/lib/gc/api.functions";
 import { KIND_LABEL, NATURE_LABEL, SITE, regionIn } from "@/lib/gc/config";
 import { clip, deadlineLabel, fmtDay, fmtEuro, fmtTime, httpUrl } from "@/lib/gc/format";
@@ -63,6 +65,9 @@ export const Route = createFileRoute("/gara/$slug")({
 
 function Scheda() {
   const t = Route.useLoaderData();
+  useEffect(() => {
+    traccia("view_item", { item_id: String(t.id), item_name: clip(t.title, 80), item_category: t.category_name ?? "", regione: t.region_name ?? "" });
+  }, [t.id, t.title, t.category_name, t.region_name]);
   const dove = placeOf(t);
   const vicina = t.open && t.days_left != null && t.days_left <= 5;
   const ora = fmtTime(t.deadline_local);

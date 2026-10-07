@@ -1,8 +1,10 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import { Page } from "@/components/gc/Page";
 import { RadarForm } from "@/components/gc/RadarForm";
 import { Registro } from "@/components/gc/Registro";
+import { traccia } from "@/lib/gc/analytics";
 import { PAGE_SIZE, searchTenders } from "@/lib/gc/api.functions";
 import {
   CATEGORIES,
@@ -88,6 +90,11 @@ function Cerca() {
   const pages = Math.max(1, Math.ceil(res.total / PAGE_SIZE));
   const scritto = (search.q ?? "").toLowerCase();
   const anche = (res.also ?? []).filter((a) => !scritto.includes(a.toLowerCase())).slice(0, 6);
+
+  useEffect(() => {
+    if (page !== 1) return;
+    traccia("search", { search_term: search.q ?? "", risultati: res.total, regione: search.regione ?? "", settore: search.settore ?? "" });
+  }, [search.q, search.regione, search.settore, page, res.total]);
 
   return (
     <Page>

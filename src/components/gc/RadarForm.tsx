@@ -69,6 +69,11 @@ export function RadarForm({ q, regione, settore, origin, full = false, id }: Pro
         },
       });
       if (res.ok && res.status === "created") {
+        try {
+          window.sessionStorage.setItem("apt-nuovo-radar", origin);
+        } catch {
+          // senza memoria di sessione l'evento non viene segnalato
+        }
         window.location.assign(`/radar/${res.token}`);
         return;
       }

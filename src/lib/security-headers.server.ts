@@ -8,8 +8,10 @@ export function applySecurityHeaders(response: Response): Response {
     'Content-Security-Policy',
     "default-src 'self'; " +
       // Paddle: lo script del pagamento e la finestra in cui il cliente paga.
-      "script-src 'self' 'unsafe-inline' https://cdn.paddle.com https://sandbox-cdn.paddle.com https://public.profitwell.com; " +
-      "frame-src 'self' https://buy.paddle.com https://sandbox-buy.paddle.com; " +
+      "script-src 'self' 'unsafe-inline' https://cdn.paddle.com https://sandbox-cdn.paddle.com https://public.profitwell.com " +
+      // Google Tag Manager, Analytics e Ads: caricati solo se configurati nella regia.
+      "https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.googleadservices.com https://www.google.com; " +
+      "frame-src 'self' https://buy.paddle.com https://sandbox-buy.paddle.com https://www.googletagmanager.com https://td.doubleclick.net https://www.google.com; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.paddle.com https://sandbox-cdn.paddle.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; media-src 'self' https:; " +

@@ -16,7 +16,7 @@ export const Route = createFileRoute("/privacy")({
 });
 
 function Privacy() {
-  const { legal, signupOpen, contactEmail, plans } = useSettings();
+  const { legal, signupOpen, contactEmail, plans, tagId } = useSettings();
   const soloStripe = !plans.paddle && Boolean(plans.pro.link_month || plans.pro.link_year);
   const email = legal.email ?? contactEmail;
   return (
@@ -116,12 +116,33 @@ function Privacy() {
           <li>Ricerche anonime: non sono riconducibili a una persona.</li>
         </ul>
 
-        <h2>Cookie</h2>
+        <h2>Cookie e strumenti di misurazione</h2>
         <p>
-          Appalti per tutti non usa cookie di profilazione né strumenti di tracciamento pubblicitario. I
-          caratteri tipografici sono serviti dal sito stesso. Il fornitore di rete può usare cookie
-          tecnici necessari alla sicurezza.
+          Il sito usa cookie tecnici, necessari al funzionamento e alla sicurezza (compresi quelli del
+          fornitore di rete Cloudflare e, durante il pagamento, quelli di Paddle). I caratteri
+          tipografici sono serviti dal sito stesso.
         </p>
+        {tagId ? (
+          <>
+            <p>
+              Solo con il tuo consenso, espresso nel banner alla prima visita, usiamo strumenti di
+              Google: Google Analytics per statistiche sulle pagine visitate e Google Ads per misurare
+              le campagne pubblicitarie e mostrare annunci pertinenti. Finché non acconsenti questi
+              strumenti non scrivono cookie. Puoi cambiare o ritirare il consenso in ogni momento dal
+              collegamento «Cookie» in fondo a ogni pagina. I dati raccolti sono trattati da Google
+              Ireland Ltd secondo le sue{" "}
+              <a href="https://policies.google.com/privacy" rel="noopener">
+                informazioni sulla privacy
+              </a>
+              .
+            </p>
+          </>
+        ) : (
+          <p>
+            Appalti per tutti non usa cookie di profilazione né strumenti di tracciamento
+            pubblicitario.
+          </p>
+        )}
 
         <h2>I tuoi diritti</h2>
         <p>

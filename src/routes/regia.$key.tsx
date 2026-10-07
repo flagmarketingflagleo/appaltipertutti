@@ -102,6 +102,7 @@ function Regia() {
   const [psm, setPsm] = useState(plans?.studio.paddle_month ?? "");
   const [psy, setPsy] = useState(plans?.studio.paddle_year ?? "");
   const [paddleSecret, setPaddleSecret] = useState("");
+  const [paddleApi, setPaddleApi] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ where: string; ok: boolean; text: string } | null>(null);
 
@@ -115,6 +116,7 @@ function Regia() {
         setResend("");
         setStripe("");
         setPaddleSecret("");
+        setPaddleApi("");
         await router.invalidate();
       } else {
         setNote({ where, ok: false, text: "Non salvato: la chiave di accesso non è valida." });
@@ -154,6 +156,7 @@ function Regia() {
     const secrets: Record<string, string> = {};
     if (stripe.trim()) secrets.stripe = stripe.trim();
     if (paddleSecret.trim()) secrets.paddle = paddleSecret.trim();
+    if (paddleApi.trim()) secrets.paddle_api = paddleApi.trim();
     void save(
       "pagamenti",
       {
@@ -420,6 +423,18 @@ function Regia() {
                 d.secrets.paddle
                   ? "Un segreto è già salvato. Compila solo per sostituirlo."
                   : "Inizia con pdl_ntfset_. Resta nel database, cifrato."
+              }
+            />
+            <Campo
+              id="p-api"
+              label="Chiave API di Paddle (facoltativa)"
+              type="password"
+              value={paddleApi}
+              onChange={setPaddleApi}
+              hint={
+                d.secrets.paddle_api
+                  ? "Una chiave API è già salvata. Compila solo per sostituirla."
+                  : "Serve solo se vuoi che Claude crei da solo prodotti, prezzi e notifiche. Resta nel database, cifrata, e la puoi revocare da Paddle quando vuoi."
               }
             />
             <Campo

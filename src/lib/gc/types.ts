@@ -169,7 +169,7 @@ export type AdminSettings = {
 export type AdminOk = {
   ok: true;
   settings: AdminSettings;
-  secrets: { resend: boolean; stripe: boolean; paddle?: boolean };
+  secrets: { resend: boolean; stripe: boolean; paddle?: boolean; paddle_api?: boolean };
   pay_events?: { type: string | null; outcome: string | null; at: string }[];
   signup_open: boolean;
   email_ready: boolean;

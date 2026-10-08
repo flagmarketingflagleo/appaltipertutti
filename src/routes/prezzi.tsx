@@ -2,11 +2,11 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { Page, useSettings } from "@/components/gc/Page";
 import { SITE } from "@/lib/gc/config";
-import { fmtInt } from "@/lib/gc/format";
+import { fmtPrezzo } from "@/lib/gc/format";
 
 const TITLE = `Piani e prezzi del radar gare | ${SITE.name}`;
 const DESCRIPTION =
-  "La ricerca tra le gare d'appalto è gratuita. Il radar gratuito segue un profilo; i piani a pagamento ne seguono di più e mostrano l'elenco completo. Si disdice quando si vuole.";
+  "Il radar gratuito segue una regione e un settore e mostra le 10 gare più recenti. Pro e Studio seguono tutta Italia, mostrano tutte le gare, avvisano ogni mattina e ricordano le scadenze. Si disdice quando si vuole.";
 
 export const Route = createFileRoute("/prezzi")({
   head: () => ({
@@ -31,8 +31,8 @@ function Prezzi() {
       <div className="gc-wrap gc-testata">
         <h1>Piani e prezzi</h1>
         <p className="gc-testata__sotto">
-          Cercare tra le gare è gratuito e resta gratuito. Paghi solo se vuoi più radar e l'elenco
-          completo delle gare adatte a te.
+          Si parte gratis, con un radar su una regione e un settore. Paghi solo se vuoi seguire tutta
+          Italia, vedere tutte le gare e non perdere una scadenza.
         </p>
       </div>
 
@@ -56,18 +56,32 @@ function Prezzi() {
                   <span className="gc-prezzo">0 €</span>
                 </td>
                 <td>
-                  <span className="gc-prezzo">{fmtInt(plans.pro.price_month)} € al mese</span>
+                  <span className="gc-prezzo">{fmtPrezzo(plans.pro.price_month)} € al mese</span>
                   <span className="gc-piccolo gc-tenue">
-                    + IVA, oppure {fmtInt(plans.pro.price_year)} € l'anno + IVA
+                    + IVA, oppure {fmtPrezzo(plans.pro.price_year)} € l'anno + IVA
                   </span>
                 </td>
                 <td>
-                  <span className="gc-prezzo">{fmtInt(plans.studio.price_month)} € al mese</span>
+                  <span className="gc-prezzo">{fmtPrezzo(plans.studio.price_month)} € al mese</span>
                   <span className="gc-piccolo gc-tenue">
-                    + IVA, oppure {fmtInt(plans.studio.price_year)} € l'anno + IVA
+                    + IVA, oppure {fmtPrezzo(plans.studio.price_year)} € l'anno + IVA
                   </span>
                 </td>
               </tr>
+              {plans.pro.promo_month < plans.pro.price_month ? (
+                <tr>
+                  <th scope="row">Prezzo riservato a chi ha il radar gratuito</th>
+                  <td>—</td>
+                  <td>
+                    {fmtPrezzo(plans.pro.promo_month)} € al mese o {fmtPrezzo(plans.pro.promo_year)} € l'anno,
+                    + IVA, bloccato finché resti abbonato
+                  </td>
+                  <td>
+                    {fmtPrezzo(plans.studio.promo_month)} € al mese o {fmtPrezzo(plans.studio.promo_year)} €
+                    l'anno, + IVA, bloccato finché resti abbonato
+                  </td>
+                </tr>
+              ) : null}
               <tr>
                 <th scope="row">Per chi è</th>
                 <td>Chi vuole provare</td>
@@ -87,10 +101,22 @@ function Prezzi() {
                 <td>{plans.studio.profiles}</td>
               </tr>
               <tr>
-                <th scope="row">Gare visibili in ogni radar</th>
+                <th scope="row">Dove e cosa segue ogni radar</th>
+                <td>Una regione, un settore</td>
+                <td>Tutta Italia o le regioni che scegli, più settori</td>
+                <td>Tutta Italia o le regioni che scegli, più settori</td>
+              </tr>
+              <tr>
+                <th scope="row">Gare visibili</th>
                 <td>Le {plans.free.daily_matches} più recenti</td>
-                <td>Fino a 200, dalla più recente</td>
-                <td>Fino a 200, dalla più recente</td>
+                <td>Tutte</td>
+                <td>Tutte</td>
+              </tr>
+              <tr>
+                <th scope="row">Gare preferite con promemoria a 30, 10 e 5 giorni dalla scadenza</th>
+                <td>No</td>
+                <td>Sì</td>
+                <td>Sì</td>
               </tr>
               <tr>
                 <th scope="row">Avvisi per email</th>

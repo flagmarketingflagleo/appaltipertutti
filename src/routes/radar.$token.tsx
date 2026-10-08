@@ -5,7 +5,7 @@ import { Page, useSettings } from "@/components/gc/Page";
 import { Registro } from "@/components/gc/Registro";
 import { getRadar, radarAction, saveRadar } from "@/lib/gc/api.functions";
 import { CATEGORIES, MIN_VALUES, REGIONS, SITE } from "@/lib/gc/config";
-import { fmtInt, plural } from "@/lib/gc/format";
+import { fmtDay, fmtInt, fmtPrezzo, plural } from "@/lib/gc/format";
 import { traccia } from "@/lib/gc/analytics";
 import { closeCheckout, onPaddleEvent, openCheckout } from "@/lib/gc/paddle";
 import type { Card, RadarData, RadarOk, RadarProfile } from "@/lib/gc/types";
@@ -147,6 +147,8 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
       if (res.ok) {
         setNote(active ? "Radar salvato. L'elenco qui accanto è aggiornato." : "Radar eliminato.");
         await router.invalidate();
+      } else if (res.error === "free_limits") {
+        setNote("Il radar gratuito segue una regione e un settore: scegline uno per ciascuno. Con Pro segui tutta Italia e più settori.");
       } else {
         setNote("Il radar non è stato salvato. Riprova tra poco.");
       }
@@ -196,40 +198,84 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
               Separa con una virgola le attività diverse.
             </span>
           </div>
-          <details className="gc-dettagli">
-            <summary>
-              Regioni: {regions.length === 0 ? "tutta Italia" : plural(regions.length, "scelta", "scelte")}
-            </summary>
-            <div className="gc-scelte" role="group" aria-label="Regioni">
-              {REGIONS.map((r) => (
-                <label key={r.slug} className="gc-check">
-                  <input
-                    type="checkbox"
-                    checked={regions.includes(r.slug)}
-                    onChange={() => setRegions((l) => toggle(l, r.slug))}
-                  />
-                  <span>{r.name}</span>
-                </label>
-              ))}
+          {paid ? (
+            <>
+              <details className="gc-dettagli">
+                <summary>
+                  Regioni: {regions.length === 0 ? "tutta Italia" : plural(regions.length, "scelta", "scelte")}
+                </summary>
+                <div className="gc-scelte" role="group" aria-label="Regioni">
+                  {REGIONS.map((r) => (
+                    <label key={r.slug} className="gc-check">
+                      <input
+                        type="checkbox"
+                        checked={regions.includes(r.slug)}
+                        onChange={() => setRegions((l) => toggle(l, r.slug))}
+                      />
+                      <span>{r.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+              <details className="gc-dettagli">
+                <summary>
+                  Settori: {categories.length === 0 ? "tutti" : plural(categories.length, "scelto", "scelti")}
+                </summary>
+                <div className="gc-scelte" role="group" aria-label="Settori">
+                  {CATEGORIES.map((c) => (
+                    <label key={c.slug} className="gc-check">
+                      <input
+                        type="checkbox"
+                        checked={categories.includes(c.slug)}
+                        onChange={() => setCategories((l) => toggle(l, c.slug))}
+                      />
+                      <span>{c.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+            </>
+          ) : (
+            <div className="gc-due-campi">
+              <div className="gc-campo">
+                <label htmlFor={`${uid}-regione`}>Regione</label>
+                <select
+                  id={`${uid}-regione`}
+                  className="gc-select"
+                  value={regions[0] ?? ""}
+                  onChange={(e) => setRegions(e.target.value ? [e.target.value] : [])}
+                  required
+                >
+                  <option value="">Scegli la regione</option>
+                  {REGIONS.map((r) => (
+                    <option key={r.slug} value={r.slug}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="gc-campo">
+                <label htmlFor={`${uid}-settore`}>Settore</label>
+                <select
+                  id={`${uid}-settore`}
+                  className="gc-select"
+                  value={categories[0] ?? ""}
+                  onChange={(e) => setCategories(e.target.value ? [e.target.value] : [])}
+                  required
+                >
+                  <option value="">Scegli il settore</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="gc-aiuto">
+                Il radar gratuito segue una regione e un settore. Con Pro scegli tutta Italia e più settori.
+              </p>
             </div>
-          </details>
-          <details className="gc-dettagli">
-            <summary>
-              Settori: {categories.length === 0 ? "tutti" : plural(categories.length, "scelto", "scelti")}
-            </summary>
-            <div className="gc-scelte" role="group" aria-label="Settori">
-              {CATEGORIES.map((c) => (
-                <label key={c.slug} className="gc-check">
-                  <input
-                    type="checkbox"
-                    checked={categories.includes(c.slug)}
-                    onChange={() => setCategories((l) => toggle(l, c.slug))}
-                  />
-                  <span>{c.name}</span>
-                </label>
-              ))}
-            </div>
-          </details>
+          )}
           <div className="gc-campo">
             <label htmlFor={`${uid}-min`}>Valore minimo</label>
             <select
@@ -429,12 +475,19 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
     return () => window.clearInterval(timer);
   }, [waiting, paid, router, acquisto, subscriber.id]);
 
-  function offerta(priceId: string): { piano: string; valore: number } {
+  // Prezzo riservato agli iscritti: vale per 14 giorni dall'iscrizione.
+  const promoAttiva = Boolean(
+    subscriber.promo_until && new Date(subscriber.promo_until).getTime() > Date.now(),
+  );
+
+  function offerta(priceId: string): { piano: string; valore: number; sconto: string | null } {
     const { pro, studio } = plans;
-    if (priceId === pro.paddle_month) return { piano: "Pro mensile", valore: pro.price_month };
-    if (priceId === pro.paddle_year) return { piano: "Pro annuale", valore: pro.price_year };
-    if (priceId === studio.paddle_month) return { piano: "Studio mensile", valore: studio.price_month };
-    return { piano: "Studio annuale", valore: studio.price_year };
+    const scelta = (piano: string, listino: number, promo: number, sconto: string | null) =>
+      promoAttiva && sconto ? { piano, valore: promo, sconto } : { piano, valore: listino, sconto: null };
+    if (priceId === pro.paddle_month) return scelta("Pro mensile", pro.price_month, pro.promo_month, pro.discount_month);
+    if (priceId === pro.paddle_year) return scelta("Pro annuale", pro.price_year, pro.promo_year, pro.discount_year);
+    if (priceId === studio.paddle_month) return scelta("Studio mensile", studio.price_month, studio.promo_month, studio.discount_month);
+    return scelta("Studio annuale", studio.price_year, studio.promo_year, studio.discount_year);
   }
 
   async function buy(priceId: string) {
@@ -442,14 +495,14 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
     setBusy(true);
     setNote(null);
     const o = offerta(priceId);
-    setAcquisto({ priceId, ...o });
+    setAcquisto({ priceId, piano: o.piano, valore: o.valore });
     traccia("begin_checkout", {
       value: o.valore,
       currency: "EUR",
       items: [{ item_id: priceId, item_name: o.piano, price: o.valore, quantity: 1 }],
     });
     try {
-      await openCheckout(plans.paddle, priceId, subscriber.id, subscriber.email);
+      await openCheckout(plans.paddle, priceId, subscriber.id, subscriber.email, o.sconto);
     } catch {
       setNote("La finestra di pagamento non si apre in questo momento. Riprova tra poco.");
     } finally {
@@ -462,11 +515,13 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
   if (!paid) {
     const { pro, studio } = plans;
     const go = (link: string) => payUrl(link, subscriber.id, subscriber.email);
+    const costo = (listino: number, promo: number, sconto: string | null) =>
+      fmtPrezzo(promoAttiva && sconto ? promo : listino);
     const offerte: [string, string, string | null, string | null][] = [
-      ["pm", `Passa a Pro, ${fmtInt(pro.price_month)} € al mese + IVA`, pro.paddle_month, pro.link_month],
-      ["py", `Pro annuale, ${fmtInt(pro.price_year)} € + IVA`, pro.paddle_year, pro.link_year],
-      ["sm", `Studio, ${fmtInt(studio.price_month)} € al mese + IVA`, studio.paddle_month, studio.link_month],
-      ["sy", `Studio annuale, ${fmtInt(studio.price_year)} € + IVA`, studio.paddle_year, studio.link_year],
+      ["pm", `Passa a Pro, ${costo(pro.price_month, pro.promo_month, pro.discount_month)} € al mese + IVA`, pro.paddle_month, pro.link_month],
+      ["py", `Pro annuale, ${costo(pro.price_year, pro.promo_year, pro.discount_year)} € + IVA`, pro.paddle_year, pro.link_year],
+      ["sm", `Studio, ${costo(studio.price_month, studio.promo_month, studio.discount_month)} € al mese + IVA`, studio.paddle_month, studio.link_month],
+      ["sy", `Studio annuale, ${costo(studio.price_year, studio.promo_year, studio.discount_year)} € + IVA`, studio.paddle_year, studio.link_year],
     ];
     for (const [key, label, priceId, link] of offerte) {
       if (conPaddle) {
@@ -575,9 +630,16 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
         ) : upgrades.length > 0 ? (
           <>
             <p>
-              Con Pro segui fino a {plans.pro.profiles} radar, vedi l'elenco completo delle gare e lo
-              scarichi in CSV.
+              Con Pro segui tutta Italia e più settori, fino a {plans.pro.profiles} radar, vedi l'elenco
+              completo delle gare, salvi le preferite con il promemoria della scadenza e scarichi tutto in CSV.
             </p>
+            {promoAttiva && plans.pro.discount_month ? (
+              <p className="gc-nota">
+                <strong>Prezzo riservato a chi si è iscritto:</strong> Pro a {fmtPrezzo(plans.pro.promo_month)} €
+                al mese invece di {fmtPrezzo(plans.pro.price_month)}, e il prezzo resta bloccato finché
+                tieni l'abbonamento. Vale fino al {fmtDay(subscriber.promo_until, false)}.
+              </p>
+            ) : null}
             <p className="gc-azioni">
               {upgrades.map((u) =>
                 u.priceId ? (

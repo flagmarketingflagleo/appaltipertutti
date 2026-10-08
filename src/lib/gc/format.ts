@@ -17,6 +17,13 @@ function dec(x: number): string {
   return (Number.isInteger(r) ? r.toString() : r.toFixed(1)).replace(".", ",");
 }
 
+/** Prezzo di listino: "34,90" oppure "349" se è tondo. */
+export function fmtPrezzo(n: number): string {
+  return Number.isInteger(n)
+    ? fmtInt(n)
+    : new Intl.NumberFormat("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+}
+
 export function fmtEuro(n: number | null | undefined): string {
   if (n == null || Number.isNaN(n)) return "non indicato";
   return `${fmtInt(n)} €`;

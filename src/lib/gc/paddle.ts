@@ -76,10 +76,17 @@ export function loadPaddle(conf: PaddleConf): Promise<PaddleApi> {
 }
 
 /** Apre la finestra di pagamento per un prezzo, legandola al radar di chi paga. */
-export async function openCheckout(conf: PaddleConf, priceId: string, subscriberId: string, email: string): Promise<void> {
+export async function openCheckout(
+  conf: PaddleConf,
+  priceId: string,
+  subscriberId: string,
+  email: string,
+  discountId?: string | null,
+): Promise<void> {
   const api = await loadPaddle(conf);
   api.Checkout.open({
     items: [{ priceId, quantity: 1 }],
+    ...(discountId ? { discountId } : {}),
     customer: { email },
     customData: { sid: subscriberId },
     settings: { displayMode: "overlay", theme: "light", locale: "it", variant: "one-page" },

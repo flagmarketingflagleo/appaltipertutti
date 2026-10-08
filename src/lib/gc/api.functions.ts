@@ -20,9 +20,9 @@ export const PAGE_SIZE = 20;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const DEFAULT_PLANS: Plans = {
-  free: { profiles: 1, daily_matches: 5 },
-  pro: { price_month: 29, price_year: 290, profiles: 5, link_month: null, link_year: null, paddle_month: null, paddle_year: null },
-  studio: { price_month: 79, price_year: 790, profiles: 20, link_month: null, link_year: null, paddle_month: null, paddle_year: null },
+  free: { profiles: 1, daily_matches: 10, regions: 1, categories: 1 },
+  pro: { price_month: 34.9, price_year: 349, promo_month: 29.9, promo_year: 299, profiles: 5, link_month: null, link_year: null, paddle_month: null, paddle_year: null, discount_month: null, discount_year: null },
+  studio: { price_month: 89.9, price_year: 899, promo_month: 79.9, promo_year: 799, profiles: 20, link_month: null, link_year: null, paddle_month: null, paddle_year: null, discount_month: null, discount_year: null },
 };
 
 const DEFAULT_SETTINGS: PublicSettings = {
@@ -61,6 +61,15 @@ function paddleId(v: unknown): string | null {
   return s && /^pri_[a-z0-9]{8,40}$/i.test(s) ? s : null;
 }
 
+function discountId(v: unknown): string | null {
+  const s = txt(v);
+  return s && /^dsc_[a-z0-9]{8,40}$/i.test(s) ? s : null;
+}
+
+function prezzo(v: unknown, fallback: number): number {
+  return typeof v === "number" && Number.isFinite(v) && v > 0 ? v : fallback;
+}
+
 function paddleToken(v: unknown): string | null {
   const s = txt(v);
   return s && /^(live|test)_[a-z0-9]{8,80}$/i.test(s) ? s : null;
@@ -73,6 +82,10 @@ function paid(p: Plans["pro"]): Plans["pro"] {
     link_year: safeLink(p.link_year),
     paddle_month: paddleId(p.paddle_month),
     paddle_year: paddleId(p.paddle_year),
+    promo_month: Math.min(prezzo(p.promo_month, p.price_month), p.price_month),
+    promo_year: Math.min(prezzo(p.promo_year, p.price_year), p.price_year),
+    discount_month: discountId(p.discount_month),
+    discount_year: discountId(p.discount_year),
   };
 }
 
@@ -198,6 +211,7 @@ export const subscribe = createServerFn({ method: "POST" })
   .validator(
     z.object({
       email: z.string().min(3).max(200),
+      company: z.string().max(120).optional(),
       q: z.string().max(300).optional(),
       regione: z.string().max(40).optional(),
       settore: z.string().max(40).optional(),
@@ -213,7 +227,7 @@ export const subscribe = createServerFn({ method: "POST" })
       p_regions: data.regione ? [data.regione] : [],
       p_categories: data.settore ? [data.settore] : [],
       p_min_value: null,
-      p_company: null,
+      p_company: data.company ?? null,
       p_consent: data.consent,
       p_origin: data.origin ?? null,
       p_hp: data.hp ?? null,

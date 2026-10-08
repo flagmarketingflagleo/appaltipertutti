@@ -98,21 +98,28 @@ export type Legal = {
 };
 
 export type PlanPaid = {
+  /** prezzo di listino, IVA esclusa */
   price_month: number;
   price_year: number;
+  /** prezzo riservato agli iscritti, IVA esclusa (uguale al listino se non c'è) */
+  promo_month: number;
+  promo_year: number;
   profiles: number;
   link_month: string | null;
   link_year: string | null;
   /** identificativi dei prezzi in Paddle, nella forma pri_… */
   paddle_month: string | null;
   paddle_year: string | null;
+  /** sconti di Paddle che portano al prezzo riservato, nella forma dsc_… */
+  discount_month: string | null;
+  discount_year: string | null;
 };
 
 /** Paddle nel browser: il token pubblico e l'ambiente a cui appartiene. */
 export type PaddleConf = { token: string; sandbox: boolean };
 
 export type Plans = {
-  free: { profiles: number; daily_matches: number };
+  free: { profiles: number; daily_matches: number; regions: number; categories: number };
   pro: PlanPaid;
   studio: PlanPaid;
   /** collegamento al portale clienti, per disdire in autonomia */
@@ -154,6 +161,8 @@ export type RadarOk = {
     status: string;
     confirmed: boolean;
     created: string;
+    /** fino a quando vale il prezzo riservato agli iscritti */
+    promo_until: string | null;
   };
   limits: { profiles?: number; daily_matches?: number; shown: number };
   profiles: RadarProfile[];

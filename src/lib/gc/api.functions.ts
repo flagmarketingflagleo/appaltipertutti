@@ -14,6 +14,8 @@ import type {
   Stats,
   SubscribeResult,
   Tender,
+  FavoriteState,
+  FavoriteResult,
 } from "./types";
 
 export const PAGE_SIZE = 20;
@@ -173,6 +175,37 @@ export const searchTenders = createServerFn({ method: "GET" })
       p_limit: limit,
       p_offset: (page - 1) * limit,
       p_log: data.log === true && page === 1,
+    });
+  });
+
+export const favoriteState = createServerFn({ method: "GET" })
+  .validator(z.object({ tenderId: z.number().int().positive() }))
+  .handler(async ({ data }): Promise<FavoriteState> => {
+    const token = tokenValido(leggiIntestazione("x-apt-token"));
+    if (!token) return { plan: null };
+    const r = await rpc<{ plan: string; on: boolean; remind: number[] } | null>("gc_favorite_state", {
+      p_token: token,
+      p_tender_id: data.tenderId,
+    });
+    return r ?? { plan: null };
+  });
+
+export const setFavorite = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      tenderId: z.number().int().positive(),
+      on: z.boolean(),
+      remind: z.array(z.number().int()).max(3).optional(),
+    }),
+  )
+  .handler(async ({ data }): Promise<FavoriteResult> => {
+    const token = tokenValido(leggiIntestazione("x-apt-token"));
+    if (!token) return { ok: false, error: "not_found" };
+    return rpc<FavoriteResult>("gc_favorite", {
+      p_token: token,
+      p_tender_id: data.tenderId,
+      p_on: data.on,
+      p_remind: data.remind ?? null,
     });
   });
 

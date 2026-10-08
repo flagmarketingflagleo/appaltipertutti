@@ -171,7 +171,18 @@ export type RadarOk = {
   };
   limits: { profiles?: number; daily_matches?: number; shown: number };
   profiles: RadarProfile[];
+  /** gare salvate tra i preferiti, con i giorni di promemoria scelti */
+  favorites?: (Card & { remind: number[] })[];
 };
+
+/** Stato di un preferito per il visitatore: nessun radar, radar gratuito o piano a pagamento. */
+export type FavoriteState =
+  | { plan: null }
+  | { plan: string; on: boolean; remind: number[] };
+
+export type FavoriteResult =
+  | { ok: true; on: boolean; remind?: number[] }
+  | { ok: false; error: "not_found" | "paid" | "limit" };
 export type RadarData = RadarOk | { ok: false; error?: string };
 
 export type AdminSettings = {

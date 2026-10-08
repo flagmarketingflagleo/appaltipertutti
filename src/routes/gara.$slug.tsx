@@ -2,6 +2,7 @@ import { Link, createFileRoute, notFound, redirect } from "@tanstack/react-route
 import { useEffect } from "react";
 
 import { Page } from "@/components/gc/Page";
+import { Preferito } from "@/components/gc/Preferito";
 import { RadarForm } from "@/components/gc/RadarForm";
 import { Registro } from "@/components/gc/Registro";
 import { traccia } from "@/lib/gc/analytics";
@@ -112,6 +113,7 @@ function Scheda() {
             <Link to="/cerca">Cerca tra quelle ancora aperte</Link>
           </p>
         ) : null}
+        <Preferito tenderId={t.id} aperta={t.open} />
       </div>
 
       <div className="gc-wrap gc-due">

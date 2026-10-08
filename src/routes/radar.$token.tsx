@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { Page, useSettings } from "@/components/gc/Page";
 import { Registro } from "@/components/gc/Registro";
-import { getRadar, radarAction, saveRadar } from "@/lib/gc/api.functions";
+import { getRadar, radarAction, saveRadar, setFavorite } from "@/lib/gc/api.functions";
 import { CATEGORIES, MIN_VALUES, REGIONS, SITE } from "@/lib/gc/config";
 import { fmtDay, fmtInt, fmtPrezzo, plural } from "@/lib/gc/format";
 import { traccia } from "@/lib/gc/analytics";
@@ -368,6 +368,17 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const { subscriber, profiles, limits } = data;
+  const preferiti = data.favorites ?? [];
+
+  async function togliPreferito(id: number) {
+    setBusy(true);
+    try {
+      await setFavorite({ data: { tenderId: id, on: false } });
+      await router.invalidate();
+    } finally {
+      setBusy(false);
+    }
+  }
   const { plans, contactEmail } = settings;
   const plan = subscriber.plan;
   const paid = plan !== "free";
@@ -599,6 +610,51 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
           canRemove={profiles.length > 1}
         />
       ))}
+
+      <section className="gc-wrap gc-sezione" aria-labelledby="h-preferiti">
+        <div className="gc-sezione__testa">
+          <h2 id="h-preferiti">Gare preferite</h2>
+          <p className="gc-tenue">
+            {paid
+              ? plural(preferiti.length, "gara salvata", "gare salvate")
+              : "Con Pro"}
+          </p>
+        </div>
+        {paid ? (
+          preferiti.length > 0 ? (
+            <>
+              <p className="gc-tenue gc-piccolo">
+                Ti avvisiamo per email 30, 10 e 5 giorni prima della scadenza di ogni gara salvata. I
+                promemoria si scelgono dalla scheda della gara.
+              </p>
+              <Registro items={preferiti} />
+              <p className="gc-azioni">
+                {preferiti.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="gc-collegamento"
+                    disabled={busy}
+                    onClick={() => void togliPreferito(c.id)}
+                  >
+                    Togli «{c.title.length > 40 ? `${c.title.slice(0, 40)}…` : c.title}»
+                  </button>
+                ))}
+              </p>
+            </>
+          ) : (
+            <p className="gc-tenue">
+              Nessuna gara salvata. Nelle schede delle gare trovi il pulsante «Salva tra i preferiti»: da
+              lì parte il promemoria della scadenza.
+            </p>
+          )
+        ) : (
+          <p className="gc-tenue">
+            Con il piano Pro salvi le gare che ti interessano e ricevi un promemoria 30, 10 e 5 giorni
+            prima della scadenza, così nessuna ti sfugge.
+          </p>
+        )}
+      </section>
 
       <section className="gc-wrap gc-sezione gc-prosa" aria-labelledby="h-piano">
         <h2 id="h-piano">Piano e radar</h2>

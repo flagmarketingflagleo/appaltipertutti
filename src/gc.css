@@ -280,3 +280,8 @@ body.gc {
 .gc-muro { display: grid; gap: 1.5rem; padding: 1.5rem; background: var(--foglio); border: 1px solid var(--riga); border-top: 4px solid var(--evidenziatore); }
 @media (min-width: 52rem) { .gc-muro { grid-template-columns: 1.1fr 1fr; gap: 2.5rem; padding: 2rem; } }
 .gc-nota--chiusa { margin-top: 1.5rem; border-left: 4px solid var(--evidenziatore); }
+
+/* Preferiti nella scheda della gara */
+.gc-preferito { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-top: 1rem; font-size: var(--t-s); }
+.gc-preferito__giorni { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.8rem; }
+.gc-check--inline { display: inline-flex; align-items: center; gap: 0.3rem; }

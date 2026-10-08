@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 import { rpc } from "./supabase.server";
@@ -152,9 +153,15 @@ export const searchTenders = createServerFn({ method: "GET" })
     const limit = data.limit ?? PAGE_SIZE;
     const page = data.p ?? 1;
     const q = data.q?.trim() || null;
+    // Il Worker (src/server.ts) legge i cookie e li traduce in due intestazioni: il token del
+    // radar del visitatore e se è alla seconda ricerca senza radar (muro).
+    const token = tokenValido(leggiIntestazione("x-apt-token"));
+    const muro = leggiIntestazione("x-apt-muro") === "1";
     // Una sola chiamata: il database cerca e, se richiesto, registra la ricerca con il numero
     // di gare trovate (le ricerche a zero dicono quali parole mancano al dizionario).
     return rpc<SearchResult>("gc_search_logged", {
+      p_token: token,
+      p_muro: muro,
       p_q: q,
       p_region: data.regione || null,
       p_category: data.settore || null,
@@ -168,6 +175,18 @@ export const searchTenders = createServerFn({ method: "GET" })
       p_log: data.log === true && page === 1,
     });
   });
+
+function leggiIntestazione(nome: string): string | null {
+  try {
+    return getRequestHeader(nome) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function tokenValido(v: string | null): string | null {
+  return v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v) ? v : null;
+}
 
 function pickSample(items: Card[]): Card | null {
   const good = items.find(

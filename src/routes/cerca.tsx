@@ -87,7 +87,8 @@ function Cerca() {
   const res = Route.useLoaderData();
   const search = Route.useSearch();
   const page = search.p ?? 1;
-  const pages = Math.max(1, Math.ceil(res.total / PAGE_SIZE));
+  const pages = res.capped || res.wall ? 1 : Math.max(1, Math.ceil(res.total / PAGE_SIZE));
+  const nascoste = Math.max(0, res.total - res.items.length);
   const scritto = (search.q ?? "").toLowerCase();
   const anche = (res.also ?? []).filter((a) => !scritto.includes(a.toLowerCase())).slice(0, 6);
 
@@ -204,8 +205,48 @@ function Cerca() {
       </div>
 
       <section className="gc-wrap" style={{ paddingTop: "1.75rem" }} aria-label="Risultati">
-        {res.items.length > 0 ? (
-          <Registro items={res.items} />
+        {res.wall ? (
+          <div className="gc-muro" id="radar">
+            <div className="gc-prosa">
+              <h2 style={{ fontSize: "var(--t-xl)", marginTop: 0 }}>
+                {plural(res.total, "gara aperta corrisponde", "gare aperte corrispondono")} a questa ricerca
+              </h2>
+              <p>
+                La prima ricerca è libera. Per vedere queste gare attiva il radar gratuito: ti bastano
+                l'email, il nome dell'impresa, il settore e la regione. Da quel momento cerchi quanto vuoi
+                e il radar ti tiene da parte le gare nuove.
+              </p>
+              <p className="gc-tenue">
+                Gratis vedi le {res.cap ?? 10} gare più recenti di ogni ricerca. Con Pro le vedi tutte,
+                in tutta Italia, con il promemoria delle scadenze.{" "}
+                <Link to="/prezzi">Confronta i piani</Link>
+              </p>
+            </div>
+            <div className="gc-pannello">
+              <RadarForm id="radar-muro" origin="muro" q={search.q} regione={search.regione} settore={search.settore} full />
+            </div>
+          </div>
+        ) : res.items.length > 0 ? (
+          <>
+            <Registro items={res.items} />
+            {res.capped && nascoste > 0 ? (
+              <div className="gc-nota gc-nota--chiusa">
+                <p>
+                  <strong>
+                    {plural(nascoste, "altra gara nascosta", "altre gare nascoste")} per questa ricerca.
+                  </strong>{" "}
+                  Senza abbonamento vedi le {res.cap ?? 10} più recenti. Con Pro le vedi tutte, segui tutta
+                  Italia e ricevi il promemoria prima di ogni scadenza.
+                </p>
+                <p className="gc-azioni">
+                  <Link to="/prezzi" className="gc-btn gc-btn--piccolo">
+                    Vedi i piani
+                  </Link>
+                  <a href="#radar">Oppure attiva il radar gratuito</a>
+                </p>
+              </div>
+            ) : null}
+          </>
         ) : (
           <div className="gc-vuoto">
             <p>
@@ -246,6 +287,7 @@ function Cerca() {
         ) : null}
       </section>
 
+      {res.wall ? null : (
       <section className="gc-wrap gc-sezione" id="radar" aria-labelledby="h-radar-cerca">
         <div className="gc-due">
           <div className="gc-prosa">
@@ -268,6 +310,7 @@ function Cerca() {
           </div>
         </div>
       </section>
+      )}
     </Page>
   );
 }

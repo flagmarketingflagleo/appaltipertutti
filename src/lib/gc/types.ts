@@ -33,6 +33,11 @@ export type SearchResult = {
   sort: string;
   /** le parole dei bandi che la ricerca ha aggiunto a quelle scritte da chi cerca */
   also?: string[];
+  /** seconda ricerca di un visitatore senza radar: solo il conto, niente elenco */
+  wall?: boolean;
+  /** chi non paga vede solo le prime `cap` gare */
+  capped?: boolean;
+  cap?: number;
 };
 
 export type Tender = {

@@ -112,7 +112,11 @@ function Prezzi() {
             unita={`al mese${iva}`}
             sotto={`oppure ${fmtPrezzo(plans.pro.price_year)} € l'anno${iva}${mesiGratis(plans.pro.price_month, plans.pro.price_year)}`}
             inEvidenza
-            azione={<Link to="/radar" className="gc-btn">Inizia gratis, poi passa a Pro</Link>}
+            azione={
+              <Link to="/radar" search={{ piano: "pro" }} className="gc-btn">
+                Scegli Pro
+              </Link>
+            }
           />
           <Piano
             nome="Studio"
@@ -120,12 +124,16 @@ function Prezzi() {
             prezzo={`${fmtPrezzo(plans.studio.price_month)} €`}
             unita={`al mese${iva}`}
             sotto={`oppure ${fmtPrezzo(plans.studio.price_year)} € l'anno${iva}${mesiGratis(plans.studio.price_month, plans.studio.price_year)}`}
-            azione={<Link to="/radar" className="gc-btn gc-btn--linea">Inizia gratis, poi passa a Studio</Link>}
+            azione={
+              <Link to="/radar" search={{ piano: "studio" }} className="gc-btn gc-btn--linea">
+                Scegli Studio
+              </Link>
+            }
           />
         </div>
         <p className="gc-tenue gc-piccolo" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
-          Si parte sempre dal radar gratuito: il piano si sceglie dopo, dalla pagina personale, e si disdice
-          quando vuoi.
+          Per Pro e Studio prima attivi il radar (un minuto, serve l'email), poi paghi con carta dalla tua
+          pagina. Si disdice quando vuoi.
         </p>
       </section>
 

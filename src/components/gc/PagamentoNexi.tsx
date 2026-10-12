@@ -29,6 +29,8 @@ type Props = {
   contactEmail: string | null;
   /** parametro ?pagamento= con cui Nexi rimanda il cliente qui */
   ritorno?: "esito" | "annullato";
+  /** piano scelto nella pagina prezzi: il modulo si apre già su quel piano */
+  preseleziona?: Piano;
   /** da chiamare quando il piano è cambiato, per ricaricare la pagina del radar */
   onPianoCambiato: () => Promise<void> | void;
 };
@@ -59,10 +61,18 @@ function vaiANexi(avvio: Extract<NexiStart, { ok: true }>) {
   f.submit();
 }
 
-export function PagamentoNexi({ token, email, plan, promoUntil, plans, nexi, contactEmail, ritorno, onPianoCambiato }: Props) {
+export function PagamentoNexi({ token, email, plan, promoUntil, plans, nexi, contactEmail, ritorno, preseleziona, onPianoCambiato }: Props) {
   const [stato, setStato] = useState<Extract<NexiStatus, { ok: true }> | null>(null);
   const [statoErrore, setStatoErrore] = useState(false);
-  const [scelta, setScelta] = useState<Scelta | null>(null);
+  const [scelta, setScelta] = useState<Scelta | null>(
+    preseleziona && plan === "free" ? { plan: preseleziona, period: "month" } : null,
+  );
+  const radice = useRef<HTMLDivElement>(null);
+
+  // Chi arriva dalla pagina prezzi trova il modulo già aperto e la pagina scorre fin qui.
+  useEffect(() => {
+    if (preseleziona && plan === "free") radice.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [preseleziona, plan]);
   const [fatt, setFatt] = useState<Billing>(vuoto);
   const [avvio, setAvvio] = useState<Extract<NexiStart, { ok: true }> | null>(null);
   const [busy, setBusy] = useState(false);
@@ -240,7 +250,7 @@ export function PagamentoNexi({ token, email, plan, promoUntil, plans, nexi, con
   const ivaTesto = nexi.iva > 0 ? ` + IVA ${fmtPrezzo(nexi.iva)}%` : "";
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
+    <div ref={radice} style={{ display: "grid", gap: "1rem", scrollMarginTop: "1rem" }}>
       {ritorno === "annullato" ? (
         <p className="gc-nota" role="status">
           Pagamento annullato: non è stato addebitato nulla. Puoi riprovare quando vuoi.

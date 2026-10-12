@@ -15,13 +15,15 @@ import type { Card, RadarData, RadarOk, RadarProfile } from "@/lib/gc/types";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PLAN_NAME: Record<string, string> = { free: "Gratis", pro: "Pro", studio: "Studio" };
 
-type Search = { conferma?: number; pagamento?: "esito" | "annullato" };
+type Search = { conferma?: number; pagamento?: "esito" | "annullato"; compra?: "pro" | "studio" };
 
 export const Route = createFileRoute("/radar/$token")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     conferma: s.conferma === 1 || s.conferma === "1" ? 1 : undefined,
     // Nexi rimanda qui il cliente dopo il pagamento (esito) o se rinuncia (annullato).
     pagamento: s.pagamento === "esito" || s.pagamento === "annullato" ? s.pagamento : undefined,
+    // Arrivo da "Scegli Pro" nella pagina prezzi: l'acquisto si apre da solo.
+    compra: s.compra === "pro" || s.compra === "studio" ? s.compra : undefined,
   }),
   loaderDeps: ({ search }) => ({ conferma: search.conferma }),
   loader: async ({ params, deps }): Promise<RadarData> => {
@@ -389,7 +391,7 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
 function RadarBody({ data, token }: { data: RadarOk; token: string }) {
   const settings = useSettings();
   const router = useRouter();
-  const { pagamento } = Route.useSearch();
+  const { pagamento, compra } = Route.useSearch();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const { subscriber, profiles, limits } = data;
@@ -707,6 +709,7 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
             nexi={settings.nexi}
             contactEmail={contactEmail}
             ritorno={pagamento}
+            preseleziona={compra}
             onPianoCambiato={() => router.invalidate()}
           />
         ) : paid ? (

@@ -21,12 +21,14 @@ type Props = {
   regione?: string;
   settore?: string;
   origin: string;
+  /** piano scelto nella pagina prezzi: dopo l'attivazione si apre subito l'acquisto */
+  piano?: "pro" | "studio";
   /** mostra anche i campi "cosa" e "dove" */
   full?: boolean;
   id: string;
 };
 
-export function RadarForm({ q, regione, settore, origin, full = false, id }: Props) {
+export function RadarForm({ q, regione, settore, origin, full = false, id, piano }: Props) {
   const settings = useSettings();
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
@@ -92,7 +94,7 @@ export function RadarForm({ q, regione, settore, origin, full = false, id }: Pro
         } catch {
           // senza memoria di sessione l'evento non viene segnalato
         }
-        window.location.assign(`/radar/${res.token}`);
+        window.location.assign(piano ? `/radar/${res.token}?compra=${piano}` : `/radar/${res.token}`);
         return;
       }
       if (res.ok) {

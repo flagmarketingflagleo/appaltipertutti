@@ -129,6 +129,13 @@ export default {
       if (tokenRadar) intestazioni.set("x-apt-token", tokenRadar);
       if (muro) intestazioni.set("x-apt-muro", "1");
       const richiesta = new Request(request, { headers: intestazioni });
+      // Chi ha già il radar e sceglie un piano dalla pagina prezzi va dritto all'acquisto.
+      const pianoScelto = url.searchParams.get("piano");
+      if (url.pathname === "/radar" && tokenRadar && (pianoScelto === "pro" || pianoScelto === "studio")) {
+        return applySecurityHeaders(
+          new Response(null, { status: 302, headers: { Location: `/radar/${tokenRadar}?compra=${pianoScelto}` } }),
+        );
+      }
       const radarInUrl = /^\/radar\/([0-9a-f-]{36})$/i.exec(url.pathname)?.[1] ?? null;
       if (radarInUrl && UUID.test(radarInUrl) && radarInUrl !== tokenRadar) daImpostare.push(setCookie("apt_radar", radarInUrl));
       const ricercaFiltrata = url.pathname === "/cerca" && FILTRI.some((f) => (url.searchParams.get(f) ?? "") !== "");

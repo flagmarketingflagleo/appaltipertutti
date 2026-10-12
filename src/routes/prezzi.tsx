@@ -72,20 +72,6 @@ function Prezzi() {
                   </span>
                 </td>
               </tr>
-              {plans.pro.promo_month < plans.pro.price_month ? (
-                <tr>
-                  <th scope="row">Prezzo riservato a chi ha il radar gratuito</th>
-                  <td>—</td>
-                  <td>
-                    {fmtPrezzo(plans.pro.promo_month)} € al mese o {fmtPrezzo(plans.pro.promo_year)} € l'anno
-                    {iva}, bloccato finché resti abbonato
-                  </td>
-                  <td>
-                    {fmtPrezzo(plans.studio.promo_month)} € al mese o {fmtPrezzo(plans.studio.promo_year)} €
-                    l'anno{iva}, bloccato finché resti abbonato
-                  </td>
-                </tr>
-              ) : null}
               <tr>
                 <th scope="row">Per chi è</th>
                 <td>Chi vuole provare</td>

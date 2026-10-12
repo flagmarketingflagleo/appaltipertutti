@@ -297,3 +297,45 @@ body.gc {
 .gc-suggerimento { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 0.5rem 0.7rem; cursor: pointer; font: inherit; }
 .gc-suggerimento:hover:not(:disabled) { background: var(--foglio); }
 .gc-suggerimento:disabled { opacity: 0.5; cursor: default; }
+
+/* Pagina prezzi: tre piani come schede di cartoncino, poi il confronto riga per riga */
+.gc-piani { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: stretch; }
+.gc-piano { position: relative; display: grid; grid-template-rows: auto auto auto auto 1fr; gap: 0.45rem; padding: 1.5rem 1.4rem 1.4rem; background: var(--foglio); border: 1.5px solid var(--riga); border-radius: 10px; }
+.gc-piano--evidenza { border: 2.5px solid var(--inchiostro); box-shadow: 0 10px 28px -18px rgba(27, 37, 89, 0.45); }
+.gc-piano__segno { display: inline-block; justify-self: start; padding: 0.15rem 0.6rem; border-radius: 999px; background: var(--evidenziatore); color: var(--inchiostro-forte); font-size: var(--t-xs); font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; }
+.gc-piano--evidenza .gc-piano__segno { position: absolute; top: -0.85rem; left: 1.25rem; }
+.gc-piano__nome { font-size: var(--t-l); font-weight: 800; margin-top: 0.2rem; }
+.gc-piano__perchi { color: var(--tenue); font-size: var(--t-s); min-height: 2.6em; }
+.gc-piano__prezzo { margin-top: 0.4rem; line-height: 1.1; }
+.gc-piano__prezzo strong { font-size: var(--t-2xl); font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.gc-piano__prezzo span { color: var(--tenue); font-size: var(--t-s); }
+.gc-piano__sotto { color: var(--tenue); font-size: var(--t-s); }
+.gc-piano__azione { align-self: end; margin-top: 1rem; }
+.gc-piano__azione .gc-btn { width: 100%; white-space: normal; text-align: center; }
+.gc-tab--piani { min-width: 44rem; }
+.gc-tab--piani thead th { position: sticky; top: 0; background: var(--carta); font-size: var(--t-m); font-weight: 800; padding-bottom: 0.6rem; }
+.gc-tab--piani thead th .gc-piano__segno { margin-left: 0.4rem; vertical-align: middle; }
+.gc-tab--piani tbody th { width: 34%; color: var(--inchiostro); font-weight: 500; }
+.gc-tab--piani td { width: 22%; font-variant-numeric: tabular-nums; }
+.gc-tab--piani tbody tr:nth-child(even) { background: color-mix(in srgb, var(--foglio) 70%, var(--carta)); }
+.gc-tab--piani th:nth-child(3), .gc-tab--piani td:nth-child(3) { background: color-mix(in srgb, var(--evidenziatore) 18%, transparent); padding-left: 0.75rem; }
+.gc-si { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 999px; background: var(--inchiostro); color: #fff; font-weight: 800; font-size: var(--t-s); }
+.gc-no { color: var(--tenue); font-weight: 600; }
+@media (max-width: 60rem) {
+  .gc-piani { grid-template-columns: minmax(0, 1fr); gap: 1.4rem; }
+  .gc-piano--evidenza { order: -1; }
+  .gc-piano__perchi { min-height: 0; }
+}
+/* Sul telefono il confronto non scorre di lato: ogni caratteristica mostra i tre piani uno sotto l'altro. */
+@media (max-width: 44rem) {
+  .gc-tab--piani { min-width: 0; display: block; }
+  .gc-tab--piani thead { display: none; }
+  .gc-tab--piani tbody { display: block; }
+  .gc-tab--piani tbody tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem 0.6rem; padding: 0.85rem 0; border-top: 1px solid var(--riga); background: transparent !important; }
+  .gc-tab--piani tbody th { grid-column: 1 / -1; width: auto; padding: 0 0 0.2rem; border: 0; font-weight: 700; }
+  .gc-tab--piani tbody td { width: auto; padding: 0.35rem 0.5rem; border: 0; border-radius: 6px; background: var(--foglio); font-size: var(--t-s); }
+  .gc-tab--piani tbody td[colspan] { grid-column: 1 / -1; }
+  .gc-tab--piani tbody td::before { content: attr(data-piano); display: block; font-size: var(--t-xs); font-weight: 800; color: var(--tenue); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem; }
+  .gc-tab--piani tbody td:nth-child(3) { background: color-mix(in srgb, var(--evidenziatore) 30%, var(--foglio)); padding-left: 0.5rem; }
+  .gc-tab--piani tbody td:nth-child(3)::before { color: var(--inchiostro); }
+}

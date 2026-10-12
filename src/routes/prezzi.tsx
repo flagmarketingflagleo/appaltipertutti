@@ -1,4 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 
 import { Page, useSettings } from "@/components/gc/Page";
 import { SITE } from "@/lib/gc/config";
@@ -22,6 +23,61 @@ export const Route = createFileRoute("/prezzi")({
   component: Prezzi,
 });
 
+/** Mesi che si risparmiano pagando l'anno invece di dodici mesi. */
+function mesiGratis(mese: number, anno: number): string {
+  if (!mese || !anno) return "";
+  const n = Math.round(12 - anno / mese);
+  return n >= 1 ? ` (${n === 1 ? "un mese gratis" : `${n} mesi gratis`})` : "";
+}
+
+type PianoProps = {
+  nome: string;
+  perChi: string;
+  prezzo: string;
+  unita?: string;
+  sotto: string;
+  azione: ReactNode;
+  inEvidenza?: boolean;
+};
+
+function Piano({ nome, perChi, prezzo, unita, sotto, azione, inEvidenza }: PianoProps) {
+  return (
+    <article className={inEvidenza ? "gc-piano gc-piano--evidenza" : "gc-piano"} aria-label={`Piano ${nome}`}>
+      {inEvidenza ? <span className="gc-piano__segno">Il più scelto</span> : null}
+      <h2 className="gc-piano__nome">{nome}</h2>
+      <p className="gc-piano__perchi">{perChi}</p>
+      <p className="gc-piano__prezzo">
+        <strong>{prezzo}</strong>
+        {unita ? <span> {unita}</span> : null}
+      </p>
+      <p className="gc-piano__sotto">{sotto}</p>
+      <div className="gc-piano__azione">{azione}</div>
+    </article>
+  );
+}
+
+const PIANI = ["Gratis", "Pro", "Studio"];
+
+/** Una riga del confronto: true = incluso, false = non incluso, testo = valore. */
+function Riga({ nome, valori }: { nome: string; valori: (boolean | string)[] }) {
+  return (
+    <tr>
+      <th scope="row">{nome}</th>
+      {valori.map((v, i) => (
+        <td key={i} data-piano={PIANI[i]}>
+          {v === true ? (
+            <span className="gc-si" aria-label="incluso">✓</span>
+          ) : v === false ? (
+            <span className="gc-no" aria-label="non incluso">—</span>
+          ) : (
+            v
+          )}
+        </td>
+      ))}
+    </tr>
+  );
+}
+
 function Prezzi() {
   const { plans, emailEnabled, nexi } = useSettings();
   const conPaddle = Boolean(plans.paddle && (plans.pro.paddle_month || plans.pro.paddle_year));
@@ -40,109 +96,83 @@ function Prezzi() {
         </p>
       </div>
 
-      <section className="gc-wrap" aria-label="Confronto dei piani">
+      <section className="gc-wrap" aria-label="I piani">
+        <div className="gc-piani">
+          <Piano
+            nome="Gratis"
+            perChi="Per chi vuole provare"
+            prezzo="0 €"
+            sotto="Per sempre, senza carta"
+            azione={<Link to="/radar" className="gc-btn gc-btn--linea">Attiva il radar</Link>}
+          />
+          <Piano
+            nome="Pro"
+            perChi="Per l'impresa che partecipa alle gare"
+            prezzo={`${fmtPrezzo(plans.pro.price_month)} €`}
+            unita={`al mese${iva}`}
+            sotto={`oppure ${fmtPrezzo(plans.pro.price_year)} € l'anno${iva}${mesiGratis(plans.pro.price_month, plans.pro.price_year)}`}
+            inEvidenza
+            azione={<Link to="/radar" className="gc-btn">Inizia gratis, poi passa a Pro</Link>}
+          />
+          <Piano
+            nome="Studio"
+            perChi="Per studi e associazioni che seguono più imprese"
+            prezzo={`${fmtPrezzo(plans.studio.price_month)} €`}
+            unita={`al mese${iva}`}
+            sotto={`oppure ${fmtPrezzo(plans.studio.price_year)} € l'anno${iva}${mesiGratis(plans.studio.price_month, plans.studio.price_year)}`}
+            azione={<Link to="/radar" className="gc-btn gc-btn--linea">Inizia gratis, poi passa a Studio</Link>}
+          />
+        </div>
+        <p className="gc-tenue gc-piccolo" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+          Si parte sempre dal radar gratuito: il piano si sceglie dopo, dalla pagina personale, e si disdice
+          quando vuoi.
+        </p>
+      </section>
+
+      <section className="gc-wrap gc-sezione" aria-labelledby="h-confronto">
+        <div className="gc-sezione__testa">
+          <h2 id="h-confronto">Cosa c'è in ogni piano</h2>
+        </div>
         <div className="gc-scorri">
-          <table className="gc-tab">
+          <table className="gc-tab gc-tab--piani">
             <thead>
               <tr>
                 <th scope="col">
                   <span className="gc-nascosto">Caratteristica</span>
                 </th>
                 <th scope="col">Gratis</th>
-                <th scope="col">Pro</th>
+                <th scope="col">
+                  Pro <span className="gc-piano__segno">Il più scelto</span>
+                </th>
                 <th scope="col">Studio</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <th scope="row">Prezzo</th>
-                <td>
-                  <span className="gc-prezzo">0 €</span>
-                </td>
-                <td>
-                  <span className="gc-prezzo">{fmtPrezzo(plans.pro.price_month)} € al mese</span>
-                  <span className="gc-piccolo gc-tenue">
-                    {conIva ? "+ IVA, oppure" : "oppure"} {fmtPrezzo(plans.pro.price_year)} € l'anno{iva}
-                  </span>
-                </td>
-                <td>
-                  <span className="gc-prezzo">{fmtPrezzo(plans.studio.price_month)} € al mese</span>
-                  <span className="gc-piccolo gc-tenue">
-                    {conIva ? "+ IVA, oppure" : "oppure"} {fmtPrezzo(plans.studio.price_year)} € l'anno{iva}
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <th scope="row">Per chi è</th>
-                <td>Chi vuole provare</td>
-                <td>L'impresa che partecipa alle gare</td>
-                <td>Studi e associazioni che seguono più imprese</td>
-              </tr>
-              <tr>
-                <th scope="row">Ricerca tra tutte le gare</th>
-                <td>Sì</td>
-                <td>Sì</td>
-                <td>Sì</td>
-              </tr>
-              <tr>
-                <th scope="row">Radar, cioè ricerche salvate</th>
-                <td>{plans.free.profiles}</td>
-                <td>{plans.pro.profiles}</td>
-                <td>{plans.studio.profiles}</td>
-              </tr>
-              <tr>
-                <th scope="row">Dove e cosa segue ogni radar</th>
-                <td>Una regione, un settore</td>
-                <td>Tutta Italia o le regioni che scegli, più settori</td>
-                <td>Tutta Italia o le regioni che scegli, più settori</td>
-              </tr>
-              <tr>
-                <th scope="row">Gare visibili</th>
-                <td>Le {plans.free.daily_matches} più recenti</td>
-                <td>Tutte</td>
-                <td>Tutte</td>
-              </tr>
-              <tr>
-                <th scope="row">Filtri precisi: codici CPV e parole da escludere</th>
-                <td>No</td>
-                <td>Sì</td>
-                <td>Sì</td>
-              </tr>
-              <tr>
-                <th scope="row">Gare preferite con promemoria a 30, 10 e 5 giorni dalla scadenza</th>
-                <td>No</td>
-                <td>Sì</td>
-                <td>Sì</td>
-              </tr>
-              <tr>
-                <th scope="row">Avvisi per email</th>
-                {emailEnabled ? (
-                  <>
-                    <td>Riepilogo ogni lunedì</td>
-                    <td>Ogni mattina</td>
-                    <td>Ogni mattina</td>
-                  </>
-                ) : (
-                  <td colSpan={3}>
-                    In attivazione. Intanto il radar si consulta dalla pagina personale.
-                  </td>
-                )}
-              </tr>
-              <tr>
-                <th scope="row">Esportazione dell'elenco in CSV</th>
-                <td>No</td>
-                <td>Sì</td>
-                <td>Sì</td>
-              </tr>
+              <Riga nome="Ricerca tra tutte le gare, senza registrazione" valori={[true, true, true]} />
+              <Riga
+                nome="Radar, cioè ricerche salvate"
+                valori={[String(plans.free.profiles), String(plans.pro.profiles), String(plans.studio.profiles)]}
+              />
+              <Riga
+                nome="Dove e cosa segue ogni radar"
+                valori={["Una regione, un settore", "Tutta Italia o le regioni che scegli, più settori", "Tutta Italia o le regioni che scegli, più settori"]}
+              />
+              <Riga nome="Gare visibili per radar" valori={[`Le ${plans.free.daily_matches} più recenti`, "Tutte", "Tutte"]} />
+              <Riga nome="Filtri precisi: codici CPV e parole da escludere" valori={[false, true, true]} />
+              <Riga nome="Gare preferite con promemoria a 30, 10 e 5 giorni dalla scadenza" valori={[false, true, true]} />
+              {emailEnabled ? (
+                <Riga nome="Avvisi per email" valori={["Riepilogo ogni lunedì", "Ogni mattina", "Ogni mattina"]} />
+              ) : (
+                <tr>
+                  <th scope="row">Avvisi per email</th>
+                  <td colSpan={3} data-piano="Tutti i piani">In attivazione. Intanto il radar si consulta dalla pagina personale.</td>
+                </tr>
+              )}
+              <Riga nome="Esportazione dell'elenco in CSV" valori={[false, true, true]} />
+              <Riga nome="Rimborso entro 14 giorni dal primo pagamento" valori={["—", true, true]} />
             </tbody>
           </table>
         </div>
-        <p className="gc-azioni" style={{ marginTop: "1.75rem" }}>
-          <Link to="/radar" className="gc-btn">
-            Attiva il radar
-          </Link>
-          <span className="gc-tenue">Si parte dal piano gratuito, senza carta.</span>
-        </p>
       </section>
 
       <section className="gc-wrap gc-sezione gc-prosa">

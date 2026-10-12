@@ -25,7 +25,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Quanto costa?",
-    a: "La ricerca è gratuita e senza registrazione. Anche il primo radar è gratuito. Il piano Pro costa 29 euro al mese e serve a chi vuole seguire più profili e vedere tutte le gare del proprio radar.",
+    a: "La ricerca è gratuita e senza registrazione. Anche il radar è gratuito: segue una regione e un settore e mostra le 10 gare più recenti. Il piano Pro costa 34,90 euro al mese, o 29,90 con il prezzo riservato a chi ha già il radar gratuito, e serve a chi vuole seguire tutta Italia e più settori, vedere tutte le gare e non perdere una scadenza. Senza IVA aggiunta.",
   },
   {
     q: "Come si partecipa a una gara?",

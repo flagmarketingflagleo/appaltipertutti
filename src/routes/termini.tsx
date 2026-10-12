@@ -16,13 +16,15 @@ export const Route = createFileRoute("/termini")({
 });
 
 function Termini() {
-  const { legal, plans } = useSettings();
-  const soloStripe = !plans.paddle && Boolean(plans.pro.link_month || plans.pro.link_year);
+  const { legal, plans, nexi } = useSettings();
+  const venditore = legal.ragione_sociale ?? "il gestore del servizio";
+  const conPaddle = Boolean(plans.paddle && (plans.pro.paddle_month || plans.pro.paddle_year));
+  const conIva = nexi.enabled ? nexi.iva > 0 : conPaddle;
   return (
     <Page>
       <div className="gc-wrap gc-testata">
         <h1>Termini del servizio</h1>
-        <p className="gc-testata__sotto">Ultimo aggiornamento: 6 ottobre 2026.</p>
+        <p className="gc-testata__sotto">Ultimo aggiornamento: 12 ottobre 2026.</p>
       </div>
       <div className="gc-wrap gc-prosa">
         <h2>Il servizio</h2>
@@ -55,17 +57,14 @@ function Termini() {
           I piani a pagamento sono rivolti a imprese e professionisti. Il pagamento è anticipato,
           per un mese o per un anno. L'abbonamento si rinnova alla scadenza e puoi disdirlo quando
           vuoi: resta attivo fino alla fine del periodo già pagato. I prezzi sono indicati nella
-          pagina <Link to="/prezzi">Prezzi</Link>, al netto dell'IVA.
+          pagina <Link to="/prezzi">Prezzi</Link>
+          {conIva
+            ? ", al netto dell'IVA, che si aggiunge al momento del pagamento."
+            : " e sono definitivi: l'IVA non si applica, perché il servizio è venduto da un'impresa in regime fiscale agevolato."}
         </p>
 
-        <h2>Pagamenti, ricevute e rimborsi</h2>
-        {soloStripe ? (
-          <p>
-            Il pagamento avviene tramite Stripe. Entro 14 giorni dal primo pagamento puoi chiedere
-            il rimborso completo: le regole sono nella pagina{" "}
-            <Link to="/rimborsi">Rimborsi e disdetta</Link>.
-          </p>
-        ) : (
+        <h2>Pagamenti, fatture e rimborsi</h2>
+        {conPaddle ? (
           <p>
             Gli ordini sono gestiti dal nostro rivenditore online Paddle.com. Paddle.com è il
             venditore ufficiale (Merchant of Record) per tutti gli ordini: incassa il pagamento,
@@ -73,6 +72,14 @@ function Termini() {
             pagamento accetti anche le condizioni di acquisto di Paddle. Entro 14 giorni dal primo
             pagamento puoi chiedere il rimborso completo: le regole sono nella pagina{" "}
             <Link to="/rimborsi">Rimborsi e disdetta</Link>.
+          </p>
+        ) : (
+          <p>
+            Il venditore è {venditore}. Il pagamento avviene con carta sulla pagina sicura di Nexi
+            Payments, che gestisce l'incasso: il numero della carta non passa da questo sito e non viene
+            conservato da noi. Per ogni pagamento emettiamo la fattura con i dati che indichi al momento
+            dell'acquisto. Entro 14 giorni dal primo pagamento puoi chiedere il rimborso completo: le
+            regole sono nella pagina <Link to="/rimborsi">Rimborsi e disdetta</Link>.
           </p>
         )}
 

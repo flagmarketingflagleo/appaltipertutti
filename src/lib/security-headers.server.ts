@@ -16,7 +16,8 @@ export function applySecurityHeaders(response: Response): Response {
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; media-src 'self' https:; " +
       "connect-src 'self' https:; " +
-      "base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+      // Nexi XPay: il modulo del pagamento viene inviato alla pagina di Nexi (ambiente di prova e reale).
+      "base-uri 'self'; form-action 'self' https://ecommerce.nexi.it https://int-ecommerce.nexi.it; frame-ancestors 'self'",
   );
   headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   headers.set('X-Content-Type-Options', 'nosniff');

@@ -23,9 +23,13 @@ export const Route = createFileRoute("/prezzi")({
 });
 
 function Prezzi() {
-  const { plans, emailEnabled } = useSettings();
+  const { plans, emailEnabled, nexi } = useSettings();
   const conPaddle = Boolean(plans.paddle && (plans.pro.paddle_month || plans.pro.paddle_year));
-  const pagamenti = conPaddle || Boolean(plans.pro.link_month || plans.pro.link_year);
+  const pagamenti = nexi.enabled || conPaddle || Boolean(plans.pro.link_month || plans.pro.link_year);
+  // Con Nexi vende l'impresa: l'IVA si aggiunge solo se nella regia è impostata un'aliquota.
+  // Con Paddle, che è un rivenditore, l'IVA la applica lui al pagamento.
+  const conIva = nexi.enabled ? nexi.iva > 0 : conPaddle;
+  const iva = conIva ? " + IVA" : "";
   return (
     <Page>
       <div className="gc-wrap gc-testata">
@@ -58,13 +62,13 @@ function Prezzi() {
                 <td>
                   <span className="gc-prezzo">{fmtPrezzo(plans.pro.price_month)} € al mese</span>
                   <span className="gc-piccolo gc-tenue">
-                    + IVA, oppure {fmtPrezzo(plans.pro.price_year)} € l'anno + IVA
+                    {conIva ? "+ IVA, oppure" : "oppure"} {fmtPrezzo(plans.pro.price_year)} € l'anno{iva}
                   </span>
                 </td>
                 <td>
                   <span className="gc-prezzo">{fmtPrezzo(plans.studio.price_month)} € al mese</span>
                   <span className="gc-piccolo gc-tenue">
-                    + IVA, oppure {fmtPrezzo(plans.studio.price_year)} € l'anno + IVA
+                    {conIva ? "+ IVA, oppure" : "oppure"} {fmtPrezzo(plans.studio.price_year)} € l'anno{iva}
                   </span>
                 </td>
               </tr>
@@ -73,12 +77,12 @@ function Prezzi() {
                   <th scope="row">Prezzo riservato a chi ha il radar gratuito</th>
                   <td>—</td>
                   <td>
-                    {fmtPrezzo(plans.pro.promo_month)} € al mese o {fmtPrezzo(plans.pro.promo_year)} € l'anno,
-                    + IVA, bloccato finché resti abbonato
+                    {fmtPrezzo(plans.pro.promo_month)} € al mese o {fmtPrezzo(plans.pro.promo_year)} € l'anno
+                    {iva}, bloccato finché resti abbonato
                   </td>
                   <td>
                     {fmtPrezzo(plans.studio.promo_month)} € al mese o {fmtPrezzo(plans.studio.promo_year)} €
-                    l'anno, + IVA, bloccato finché resti abbonato
+                    l'anno{iva}, bloccato finché resti abbonato
                   </td>
                 </tr>
               ) : null}
@@ -153,7 +157,7 @@ function Prezzi() {
         <h2>Come si passa a un piano a pagamento</h2>
         <p>
           {pagamenti
-            ? "Dalla pagina del tuo radar, con carta. Il piano si rinnova ogni mese o ogni anno e si disdice quando vuoi: resta attivo fino alla fine del periodo già pagato."
+            ? "Dalla pagina del tuo radar, con carta, sulla pagina sicura di Nexi. Il piano si rinnova ogni mese o ogni anno e si disdice quando vuoi: resta attivo fino alla fine del periodo già pagato."
             : "I piani a pagamento aprono a breve. Intanto puoi attivare il radar gratuito: quando Pro sarà disponibile lo troverai nella pagina del tuo radar."}
         </p>
         <p>
@@ -166,8 +170,10 @@ function Prezzi() {
           sulle piattaforme degli enti e non sostituisce un consulente.
         </p>
         <p className="gc-nota">
-          Tutti i prezzi sono al netto dell'IVA, che si aggiunge al momento del pagamento. Il
-          servizio è rivolto a imprese e professionisti.
+          {conIva
+            ? "Tutti i prezzi sono al netto dell'IVA, che si aggiunge al momento del pagamento."
+            : "I prezzi sono quelli indicati: non si aggiunge l'IVA, perché il servizio è venduto da un'impresa in regime fiscale agevolato (operazione senza applicazione dell'IVA)."}{" "}
+          Il servizio è rivolto a imprese e professionisti: per ogni pagamento viene emessa la fattura.
         </p>
       </section>
     </Page>

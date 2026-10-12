@@ -4,7 +4,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { Page } from "@/components/gc/Page";
 import { getAdmin, saveAdmin } from "@/lib/gc/api.functions";
 import { PADDLE_WEBHOOK_URL, SITE, STRIPE_WEBHOOK_URL } from "@/lib/gc/config";
-import { fmtDay, fmtInt } from "@/lib/gc/format";
+import { fmtDay, fmtInt, fmtPrezzo } from "@/lib/gc/format";
 import type { AdminOk } from "@/lib/gc/types";
 
 export const Route = createFileRoute("/regia/$key")({
@@ -37,9 +37,10 @@ type CampoProps = {
   hint?: string;
   type?: string;
   placeholder?: string;
+  inputMode?: "text" | "decimal" | "numeric";
 };
 
-function Campo({ id, label, value, onChange, hint, type = "text", placeholder }: CampoProps) {
+function Campo({ id, label, value, onChange, hint, type = "text", placeholder, inputMode }: CampoProps) {
   return (
     <div className="gc-campo">
       <label htmlFor={id}>{label}</label>
@@ -50,6 +51,7 @@ function Campo({ id, label, value, onChange, hint, type = "text", placeholder }:
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        inputMode={inputMode}
         autoComplete="off"
         aria-describedby={hint ? `${id}-aiuto` : undefined}
       />
@@ -104,6 +106,14 @@ function Regia() {
   const [psy, setPsy] = useState(plans?.studio.paddle_year ?? "");
   const [paddleSecret, setPaddleSecret] = useState("");
   const [paddleApi, setPaddleApi] = useState("");
+  const nexi = s.nexi ?? {};
+  const [nexiOn, setNexiOn] = useState(nexi.enabled === true);
+  const [nexiEnv, setNexiEnv] = useState(nexi.env === "live" ? "live" : "test");
+  const [nexiIva, setNexiIva] = useState(String(nexi.iva ?? 0));
+  const [nexiFatt, setNexiFatt] = useState(nexi.billing_required !== false);
+  const [nexiAlias, setNexiAlias] = useState("");
+  const [nexiMac, setNexiMac] = useState("");
+  const [nexiGruppo, setNexiGruppo] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ where: string; ok: boolean; text: string } | null>(null);
 
@@ -118,6 +128,9 @@ function Regia() {
         setStripe("");
         setPaddleSecret("");
         setPaddleApi("");
+        setNexiAlias("");
+        setNexiMac("");
+        setNexiGruppo("");
         await router.invalidate();
       } else {
         setNote({ where, ok: false, text: "Non salvato: la chiave di accesso non è valida." });
@@ -185,6 +198,27 @@ function Regia() {
     );
   }
 
+  function saveNexi(e: FormEvent) {
+    e.preventDefault();
+    const secrets: Record<string, string> = {};
+    if (nexiAlias.trim()) secrets.nexi_alias = nexiAlias.trim();
+    if (nexiMac.trim()) secrets.nexi_mac = nexiMac.trim();
+    if (nexiGruppo.trim()) secrets.nexi_gruppo = nexiGruppo.trim();
+    const aliquota = Number(nexiIva.replace(",", "."));
+    void save(
+      "nexi",
+      {
+        nexi: {
+          enabled: nexiOn,
+          env: nexiEnv === "live" ? "live" : "test",
+          iva: Number.isFinite(aliquota) && aliquota >= 0 && aliquota <= 100 ? aliquota : 0,
+          billing_required: nexiFatt,
+        },
+      },
+      Object.keys(secrets).length > 0 ? secrets : undefined,
+    );
+  }
+
   const tokenOk = /^(live|test)_[a-z0-9]{8,80}$/i.test(paddleToken.trim());
   const prezzoOk = (v: string) => v.trim() === "" || /^pri_[a-z0-9]{8,40}$/i.test(v.trim());
   const prezziOk = [ppm, ppy, psm, psy].every(prezzoOk);
@@ -202,8 +236,17 @@ function Regia() {
     Boolean(plans?.pro.paddle_month || plans?.pro.paddle_year) &&
     d.secrets.paddle === true;
   const stripePronto = Boolean(plans?.pro.link_month || plans?.pro.link_year) && d.secrets.stripe;
-  const pagamentiPronti = paddlePronto || stripePronto;
+  const nexiCredenziali = d.secrets.nexi_alias === true && d.secrets.nexi_mac === true;
+  const nexiPronto = nexiCredenziali && nexi.enabled === true;
+  const pagamentiPronti = nexiPronto || paddlePronto || stripePronto;
   const avvisi = d.pay_events ?? [];
+  const ordini = d.orders ?? [];
+  const STATO_ORDINE: Record<string, string> = {
+    pending: "in attesa",
+    paid: "pagato",
+    failed: "non riuscito",
+    cancelled: "annullato",
+  };
   const outbox = Object.entries(d.email);
 
   return (
@@ -228,7 +271,8 @@ function Regia() {
             avvisi.
           </Stato>
           <Stato ok={pagamentiPronti}>
-            Pagamenti: token, prezzi e segreto delle notifiche di Paddle.
+            Pagamenti: alias e chiave MAC di Nexi XPay, con l'interruttore acceso
+            {nexiCredenziali && !nexiPronto ? " (credenziali salvate, interruttore spento)" : ""}.
           </Stato>
         </ul>
         <p className="gc-nota" style={{ marginTop: "1.25rem" }}>
@@ -386,9 +430,171 @@ function Regia() {
         </div>
       </section>
 
+      <section className="gc-wrap gc-sezione" aria-labelledby="h-nexi">
+        <div className="gc-sezione__testa">
+          <h2 id="h-nexi">3. Pagamenti con Nexi XPay</h2>
+          <p className="gc-tenue gc-piccolo">
+            {nexiPronto
+              ? nexi.env === "live"
+                ? "Attivo, pagamenti veri"
+                : "Attivo, ambiente di prova"
+              : nexiCredenziali
+                ? "Credenziali salvate, interruttore spento"
+                : "Da collegare"}
+          </p>
+        </div>
+        <div className="gc-due">
+          <form className="gc-pannello" onSubmit={saveNexi}>
+            <Campo
+              id="n-alias"
+              label="Alias"
+              value={nexiAlias}
+              onChange={setNexiAlias}
+              hint={
+                d.secrets.nexi_alias
+                  ? "Un alias è già salvato. Compila solo per sostituirlo."
+                  : "Lo trovi nel back office di Nexi, alla voce Profilo o Configurazione. Resta nel database, cifrato."
+              }
+            />
+            <Campo
+              id="n-mac"
+              label="Chiave MAC"
+              type="password"
+              value={nexiMac}
+              onChange={setNexiMac}
+              hint={
+                d.secrets.nexi_mac
+                  ? "Una chiave è già salvata. Compila solo per sostituirla."
+                  : "La chiave segreta con cui si firmano le richieste. Resta nel database, cifrata."
+              }
+            />
+            <Campo
+              id="n-gruppo"
+              label="Gruppo (per i rinnovi automatici)"
+              value={nexiGruppo}
+              onChange={setNexiGruppo}
+              hint={
+                d.secrets.nexi_gruppo
+                  ? "Un gruppo è già salvato. Compila solo per sostituirlo."
+                  : "Lo assegna Nexi quando attiva i pagamenti ricorrenti. Senza gruppo ogni pagamento è singolo e il cliente rinnova a mano."
+              }
+            />
+            <div className="gc-campo">
+              <label htmlFor="n-env">Ambiente</label>
+              <select id="n-env" className="gc-select" value={nexiEnv} onChange={(e) => setNexiEnv(e.target.value)}>
+                <option value="test">Di prova (int-ecommerce.nexi.it, nessun addebito)</option>
+                <option value="live">Reale (ecommerce.nexi.it, pagamenti veri)</option>
+              </select>
+              <span className="gc-aiuto">
+                Alias e chiave di prova valgono solo per l'ambiente di prova: quando passi a quello reale
+                inserisci le credenziali reali.
+              </span>
+            </div>
+            <Campo
+              id="n-iva"
+              label="IVA da aggiungere ai prezzi, in percentuale"
+              value={nexiIva}
+              onChange={setNexiIva}
+              inputMode="decimal"
+              hint="0 in regime fiscale agevolato: i prezzi del listino sono quelli pagati. Con 22 il sito aggiunge l'IVA al momento del pagamento."
+            />
+            <label className="gc-check gc-check--inline">
+              <input type="checkbox" checked={nexiFatt} onChange={(e) => setNexiFatt(e.target.checked)} />
+              <span>Chiedi i dati di fatturazione prima del pagamento (nome e partita IVA o codice fiscale)</span>
+            </label>
+            <label className="gc-check gc-check--inline">
+              <input type="checkbox" checked={nexiOn} onChange={(e) => setNexiOn(e.target.checked)} />
+              <span>Pagamenti attivi: i bottoni dei piani compaiono nella pagina del radar</span>
+            </label>
+            <div>
+              <button type="submit" className="gc-btn" disabled={busy}>
+                Salva Nexi
+              </button>
+            </div>
+            {esito("nexi")}
+          </form>
+          <div className="gc-prosa">
+            <ol style={{ paddingLeft: "1.2rem", display: "grid", gap: "0.6rem" }}>
+              <li>
+                <strong>Prova.</strong> Chiedi a Nexi alias, chiave MAC e gruppo dell'Area Test e le carte di
+                prova. Incollali qui con ambiente «Di prova», accendi l'interruttore e paga dalla pagina di un
+                tuo radar: deve riuscire un pagamento, uno rifiutato e uno annullato.
+              </li>
+              <li>
+                <strong>Notifica.</strong> Nexi avvisa il database a{" "}
+                <span className="gc-codice" style={{ overflowWrap: "anywhere" }}>
+                  https://sixziykskamdikhssktn.supabase.co/functions/v1/nexi-notify
+                </span>
+                : l'indirizzo viaggia in ogni richiesta, non va configurato nel back office. Il piano si attiva
+                solo se la firma e l'importo sono giusti.
+              </li>
+              <li>
+                <strong>Rinnovi.</strong> Chiedi a Nexi di attivare i pagamenti ricorrenti sul contratto e
+                incolla qui il gruppo: così il primo pagamento salva il contratto per i rinnovi.
+              </li>
+              <li>
+                <strong>Pagamenti veri.</strong> Metti le credenziali reali, scegli ambiente «Reale», salva.
+                Fai un acquisto vero di prova e poi rimborsalo dal back office di Nexi.
+              </li>
+            </ol>
+            <p>
+              Rimborsi: si dispongono dal back office di Nexi; poi il piano dell'iscritto va riportato a
+              gratuito a mano. I piani scaduti da più di 3 giorni tornano gratuiti da soli ogni mattina.
+            </p>
+            <h3>Ultimi ordini</h3>
+            {ordini.length === 0 ? (
+              <p className="gc-tenue">Ancora nessun ordine.</p>
+            ) : (
+              <div className="gc-scorri">
+                <table className="gc-tab" style={{ minWidth: "30rem" }}>
+                  <thead>
+                    <tr>
+                      <th scope="col">Quando</th>
+                      <th scope="col">Chi</th>
+                      <th scope="col">Piano</th>
+                      <th scope="col">Totale</th>
+                      <th scope="col">Stato</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ordini.map((o) => (
+                      <tr key={o.codTrans}>
+                        <td>
+                          {fmtDay(o.created)}{" "}
+                          <span className="gc-tenue gc-piccolo">{o.created.slice(11, 16)} UTC</span>
+                        </td>
+                        <td>
+                          {o.billing?.name ?? o.company ?? o.email}
+                          <br />
+                          <span className="gc-tenue gc-piccolo">
+                            {o.email}
+                            {o.billing?.vat ? `, P. IVA ${o.billing.vat}` : o.billing?.cf ? `, CF ${o.billing.cf}` : ""}
+                          </span>
+                        </td>
+                        <td>
+                          {o.plan} {o.period === "year" ? "annuale" : "mensile"}
+                          {o.kind !== "first" ? ` (${o.kind})` : ""}
+                        </td>
+                        <td>{fmtPrezzo(o.total)} €</td>
+                        <td>
+                          {STATO_ORDINE[o.status] ?? o.status}
+                          {o.esito && o.status !== "paid" ? ` (${o.esito})` : ""}
+                          <br />
+                          <span className="gc-codice gc-piccolo">{o.codTrans}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
       <section className="gc-wrap gc-sezione" aria-labelledby="h-paga">
         <div className="gc-sezione__testa">
-          <h2 id="h-paga">3. Pagamenti con Paddle</h2>
+          <h2 id="h-paga">In alternativa: Paddle</h2>
           <p className="gc-tenue gc-piccolo">
             {paddlePronto
               ? "Paddle collegato"

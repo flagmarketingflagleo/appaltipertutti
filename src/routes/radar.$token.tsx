@@ -2,6 +2,7 @@ import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { Page, useSettings } from "@/components/gc/Page";
+import { PagamentoNexi } from "@/components/gc/PagamentoNexi";
 import { Registro } from "@/components/gc/Registro";
 import { getRadar, radarAction, saveRadar, setFavorite } from "@/lib/gc/api.functions";
 import { CATEGORIES, MIN_VALUES, REGIONS, SITE } from "@/lib/gc/config";
@@ -13,11 +14,13 @@ import type { Card, RadarData, RadarOk, RadarProfile } from "@/lib/gc/types";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PLAN_NAME: Record<string, string> = { free: "Gratis", pro: "Pro", studio: "Studio" };
 
-type Search = { conferma?: number };
+type Search = { conferma?: number; pagamento?: "esito" | "annullato" };
 
 export const Route = createFileRoute("/radar/$token")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     conferma: s.conferma === 1 || s.conferma === "1" ? 1 : undefined,
+    // Nexi rimanda qui il cliente dopo il pagamento (esito) o se rinuncia (annullato).
+    pagamento: s.pagamento === "esito" || s.pagamento === "annullato" ? s.pagamento : undefined,
   }),
   loaderDeps: ({ search }) => ({ conferma: search.conferma }),
   loader: async ({ params, deps }): Promise<RadarData> => {
@@ -365,6 +368,7 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
 function RadarBody({ data, token }: { data: RadarOk; token: string }) {
   const settings = useSettings();
   const router = useRouter();
+  const { pagamento } = Route.useSearch();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const { subscriber, profiles, limits } = data;
@@ -523,7 +527,10 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
 
   const upgrades: { key: string; label: string; href?: string; priceId?: string }[] = [];
   const conPaddle = Boolean(plans.paddle && (plans.pro.paddle_month || plans.pro.paddle_year));
-  if (!paid) {
+  // Con Nexi vende direttamente l'impresa: il pagamento si fa dalla pagina di Nexi e il piano
+  // si gestisce qui. Paddle e Stripe restano solo come alternativa, se configurati.
+  const conNexi = settings.nexi.enabled;
+  if (!paid && !conNexi) {
     const { pro, studio } = plans;
     const go = (link: string) => payUrl(link, subscriber.id, subscriber.email);
     const costo = (listino: number, promo: number, sconto: string | null) =>
@@ -669,7 +676,19 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
             </button>
           </p>
         ) : null}
-        {paid ? (
+        {conNexi || pagamento ? (
+          <PagamentoNexi
+            token={token}
+            email={subscriber.email}
+            plan={plan}
+            promoUntil={subscriber.promo_until ?? null}
+            plans={plans}
+            nexi={settings.nexi}
+            contactEmail={contactEmail}
+            ritorno={pagamento}
+            onPianoCambiato={() => router.invalidate()}
+          />
+        ) : paid ? (
           <p>
             {plans.portal ? (
               <a href={plans.portal} rel="noopener">

@@ -17,13 +17,13 @@ export const Route = createFileRoute("/privacy")({
 
 function Privacy() {
   const { legal, signupOpen, contactEmail, plans, tagId } = useSettings();
-  const soloStripe = !plans.paddle && Boolean(plans.pro.link_month || plans.pro.link_year);
+  const conPaddle = Boolean(plans.paddle && (plans.pro.paddle_month || plans.pro.paddle_year));
   const email = legal.email ?? contactEmail;
   return (
     <Page>
       <div className="gc-wrap gc-testata">
         <h1>Informativa sulla privacy</h1>
-        <p className="gc-testata__sotto">Ultimo aggiornamento: 6 ottobre 2026.</p>
+        <p className="gc-testata__sotto">Ultimo aggiornamento: 12 ottobre 2026.</p>
       </div>
       <div className="gc-wrap gc-prosa">
         {signupOpen ? null : (
@@ -64,12 +64,17 @@ function Privacy() {
             regioni, i settori e il valore minimo che scegli.
           </li>
           <li>
-            <strong>Dati di pagamento</strong>, se passi a un piano a pagamento. Li raccoglie{" "}
-            {soloStripe
-              ? "Stripe"
-              : "Paddle.com, che vende il servizio come rivenditore e li tratta come titolare autonomo, secondo la propria informativa"}
-            : noi riceviamo l'esito, il piano scelto e gli identificativi del cliente e
-            dell'abbonamento, non il numero della carta.
+            <strong>Dati di fatturazione</strong>, se passi a un piano a pagamento: nome
+            dell'impresa, partita IVA o codice fiscale e, se li indichi, indirizzo, codice
+            destinatario e PEC. Servono per emettere la fattura.
+          </li>
+          <li>
+            <strong>Dati della carta</strong>, se paghi.{" "}
+            {conPaddle
+              ? "Li raccoglie Paddle.com, che vende il servizio come rivenditore e li tratta come titolare autonomo, secondo la propria informativa"
+              : "Li raccoglie Nexi Payments S.p.A. sulla propria pagina di pagamento, secondo la propria informativa"}
+            : noi riceviamo l'esito, l'importo, il piano scelto e un codice dell'operazione, non il
+            numero della carta.
           </li>
           <li>
             <strong>Ricerche e schede aperte</strong>, in forma anonima: registriamo il testo
@@ -100,10 +105,10 @@ function Privacy() {
         <h2>Chi li riceve</h2>
         <p>
           I dati sono trattati da fornitori che lavorano per noi: Supabase per il database,
-          ospitato nell'Unione europea; Cloudflare, tramite Higgsfield, per la pubblicazione del
-          sito; Resend per l'invio delle email; {soloStripe ? "Stripe" : "Paddle"} per i pagamenti. Alcuni di questi fornitori
-          hanno sede negli Stati Uniti: i trasferimenti avvengono con le garanzie previste dal
-          GDPR.
+          ospitato nell'Unione europea; Cloudflare per la pubblicazione del sito; Resend per
+          l'invio delle email; {conPaddle ? "Paddle" : "Nexi Payments"} per i pagamenti con carta.
+          Alcuni di questi fornitori hanno sede negli Stati Uniti: i trasferimenti avvengono con le
+          garanzie previste dal GDPR.
         </p>
 
         <h2>Per quanto tempo</h2>
@@ -118,9 +123,10 @@ function Privacy() {
 
         <h2>Cookie e strumenti di misurazione</h2>
         <p>
-          Il sito usa cookie tecnici, necessari al funzionamento e alla sicurezza (compresi quelli del
-          fornitore di rete Cloudflare e, durante il pagamento, quelli di Paddle). I caratteri
-          tipografici sono serviti dal sito stesso.
+          Il sito usa cookie tecnici, necessari al funzionamento e alla sicurezza: compresi quelli del
+          fornitore di rete Cloudflare e quelli che ricordano il tuo radar e quante ricerche hai fatto.
+          Durante il pagamento, sulla pagina di {conPaddle ? "Paddle" : "Nexi"}, valgono i cookie di quel
+          fornitore. I caratteri tipografici sono serviti dal sito stesso.
         </p>
         {tagId ? (
           <>

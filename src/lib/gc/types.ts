@@ -143,7 +143,59 @@ export type PublicSettings = {
   plans: Plans;
   /** codice di Google Tag Manager (GTM-…) o di Google Analytics (G-…), se configurato */
   tagId: string | null;
+  /** cassa Nexi XPay: pagamenti con carta venduti direttamente dall'impresa */
+  nexi: NexiConf;
 };
+
+export type NexiConf = {
+  enabled: boolean;
+  /** "live" per i pagamenti veri, altro per l'ambiente di prova di Nexi */
+  env: string;
+  /** IVA aggiunta al prezzo, in percentuale (0 in regime dei minimi) */
+  iva: number;
+  billing_required: boolean;
+};
+
+/** Dati di fatturazione chiesti prima del pagamento. */
+export type Billing = {
+  name: string;
+  vat?: string;
+  cf?: string;
+  address?: string;
+  cap?: string;
+  city?: string;
+  prov?: string;
+  sdi?: string;
+  pec?: string;
+};
+
+export type NexiStart =
+  | {
+      ok: true;
+      action: string;
+      method: string;
+      charset: string;
+      fields: Record<string, string>;
+      order: { codTrans: string; name: string; net: number; vat_rate: number; total: number; recurring: boolean; test: boolean };
+    }
+  | { ok: false; error: "not_configured" | "not_found" | "plan" | "price" | "billing" };
+
+export type NexiStatus =
+  | {
+      ok: true;
+      available: boolean;
+      test: boolean;
+      vat_rate: number;
+      billing_required: boolean;
+      plan: string;
+      plan_until: string | null;
+      period: string | null;
+      provider: string | null;
+      auto_renew: boolean | null;
+      billing: Billing | null;
+      last_order: { codTrans: string; status: string; plan: string; period: string; total: number; created: string } | null;
+    }
+  | { ok: false; error: string };
 
 export type RadarProfile = {
   id: number;
@@ -191,13 +243,40 @@ export type AdminSettings = {
   plans?: Plans;
   signup_enabled?: boolean;
   email_enabled?: boolean;
+  nexi?: Partial<NexiConf>;
+};
+
+/** Un tentativo di pagamento con Nexi, come lo vede la regia. */
+export type AdminOrder = {
+  codTrans: string;
+  email: string;
+  company: string | null;
+  plan: string;
+  period: string;
+  kind: string;
+  net: number;
+  total: number;
+  status: string;
+  esito: string | null;
+  billing: Billing | null;
+  created: string;
+  closed: string | null;
 };
 
 export type AdminOk = {
   ok: true;
   settings: AdminSettings;
-  secrets: { resend: boolean; stripe: boolean; paddle?: boolean; paddle_api?: boolean };
+  secrets: {
+    resend: boolean;
+    stripe: boolean;
+    paddle?: boolean;
+    paddle_api?: boolean;
+    nexi_alias?: boolean;
+    nexi_mac?: boolean;
+    nexi_gruppo?: boolean;
+  };
   pay_events?: { type: string | null; outcome: string | null; at: string }[];
+  orders?: AdminOrder[];
   signup_open: boolean;
   email_ready: boolean;
   kpi: {

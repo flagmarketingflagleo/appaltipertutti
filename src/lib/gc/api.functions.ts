@@ -16,6 +16,10 @@ import type {
   Tender,
   FavoriteState,
   FavoriteResult,
+  Billing,
+  NexiConf,
+  NexiStart,
+  NexiStatus,
 } from "./types";
 
 export const PAGE_SIZE = 20;
@@ -35,10 +39,12 @@ const DEFAULT_SETTINGS: PublicSettings = {
   contactEmail: null,
   plans: DEFAULT_PLANS,
   tagId: null,
+  nexi: { enabled: false, env: "test", iva: 0, billing_required: true },
 };
 
 type RawSettings = {
   site?: { contact_email?: string | null; tag_id?: string | null };
+  nexi?: { enabled?: boolean; env?: string; iva?: number; billing_required?: boolean };
   legal?: Partial<PublicSettings["legal"]>;
   plans?: Partial<Plans>;
   signup_enabled?: boolean;
@@ -116,6 +122,17 @@ function normalizeSettings(raw: RawSettings | null): PublicSettings {
       paddle: token ? { token, sandbox: token.toLowerCase().startsWith("test_") } : null,
     },
     tagId: tagId(raw.site?.tag_id),
+    nexi: nexiConf(raw.nexi),
+  };
+}
+
+function nexiConf(v: RawSettings["nexi"]): NexiConf {
+  const iva = typeof v?.iva === "number" && Number.isFinite(v.iva) && v.iva >= 0 ? v.iva : 0;
+  return {
+    enabled: v?.enabled === true,
+    env: typeof v?.env === "string" && v.env ? v.env : "test",
+    iva,
+    billing_required: v?.billing_required !== false,
   };
 }
 
@@ -208,6 +225,52 @@ export const setFavorite = createServerFn({ method: "POST" })
       p_remind: data.remind ?? null,
     });
   });
+
+const billingSchema = z.object({
+  name: z.string().min(2).max(120),
+  vat: z.string().max(20).optional(),
+  cf: z.string().max(20).optional(),
+  address: z.string().max(120).optional(),
+  cap: z.string().max(10).optional(),
+  city: z.string().max(80).optional(),
+  prov: z.string().max(4).optional(),
+  sdi: z.string().max(10).optional(),
+  pec: z.string().max(120).optional(),
+});
+
+export const nexiStart = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      token: z.string().uuid(),
+      plan: z.enum(["pro", "studio"]),
+      period: z.enum(["month", "year"]),
+      billing: billingSchema.optional(),
+    }),
+  )
+  .handler(async ({ data }): Promise<NexiStart> => {
+    const pulito = (b: Billing | undefined): Billing | null => {
+      if (!b) return null;
+      const out: Record<string, string> = {};
+      for (const [k, v] of Object.entries(b)) {
+        if (typeof v === "string" && v.trim() !== "") out[k] = v.trim();
+      }
+      return out as unknown as Billing;
+    };
+    return rpc<NexiStart>("gc_nexi_start", {
+      p_token: data.token,
+      p_plan: data.plan,
+      p_period: data.period,
+      p_billing: pulito(data.billing),
+    });
+  });
+
+export const nexiStatus = createServerFn({ method: "GET" })
+  .validator(z.object({ token: z.string().uuid() }))
+  .handler(async ({ data }): Promise<NexiStatus> => rpc<NexiStatus>("gc_nexi_status", { p_token: data.token }));
+
+export const nexiCancel = createServerFn({ method: "POST" })
+  .validator(z.object({ token: z.string().uuid() }))
+  .handler(async ({ data }) => rpc<{ ok: boolean; error?: string; plan?: string; plan_until?: string | null }>("gc_nexi_cancel", { p_token: data.token }));
 
 function leggiIntestazione(nome: string): string | null {
   try {

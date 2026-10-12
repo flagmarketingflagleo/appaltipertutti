@@ -2,6 +2,7 @@ import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { Page, useSettings } from "@/components/gc/Page";
+import { FiltriCpv, FiltriCpvChiusi } from "@/components/gc/FiltriCpv";
 import { PagamentoNexi } from "@/components/gc/PagamentoNexi";
 import { Registro } from "@/components/gc/Registro";
 import { getRadar, radarAction, saveRadar, setFavorite } from "@/lib/gc/api.functions";
@@ -126,6 +127,9 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
   const [regions, setRegions] = useState<string[]>(p.regions ?? []);
   const [categories, setCategories] = useState<string[]>(p.categories ?? []);
   const [min, setMin] = useState(p.min_value ? String(p.min_value) : "");
+  const [cpv, setCpv] = useState<string[]>(p.cpv ?? []);
+  const [cpvLabels, setCpvLabels] = useState<Record<string, string>>(p.cpv_labels ?? {});
+  const [exclude, setExclude] = useState(p.exclude ?? "");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const uid = `r${p.id}`;
@@ -145,6 +149,8 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
           categories,
           min: min ? Number(min) : null,
           active,
+          cpv: paid ? cpv : [],
+          exclude: paid ? exclude.trim() || undefined : undefined,
         },
       });
       if (res.ok) {
@@ -278,6 +284,21 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
                 Il radar gratuito segue una regione e un settore. Con Pro scegli tutta Italia e più settori.
               </p>
             </div>
+          )}
+          {paid ? (
+            <FiltriCpv
+              uid={uid}
+              cpv={cpv}
+              labels={cpvLabels}
+              exclude={exclude}
+              onCpv={(codes, labels) => {
+                setCpv(codes);
+                setCpvLabels(labels);
+              }}
+              onExclude={setExclude}
+            />
+          ) : (
+            <FiltriCpvChiusi />
           )}
           <div className="gc-campo">
             <label htmlFor={`${uid}-min`}>Valore minimo</label>

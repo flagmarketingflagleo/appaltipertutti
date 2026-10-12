@@ -205,8 +205,16 @@ export type RadarProfile = {
   categories: string[];
   min_value: number | null;
   active: boolean;
+  /** codici CPV scelti (solo piani a pagamento): vale il codice e tutto il suo ramo */
+  cpv?: string[];
+  /** descrizione di ogni codice scelto */
+  cpv_labels?: Record<string, string>;
+  /** parole da escludere, separate da virgola (solo piani a pagamento) */
+  exclude?: string | null;
   matches: { total: number; items: Card[]; relaxed?: boolean };
 };
+
+export type CpvHit = { code: string; label: string; open: number };
 
 export type RadarOk = {
   ok: true;

@@ -20,6 +20,7 @@ import type {
   NexiConf,
   NexiStart,
   NexiStatus,
+  CpvHit,
 } from "./types";
 
 export const PAGE_SIZE = 20;
@@ -369,6 +370,8 @@ export const saveRadar = createServerFn({ method: "POST" })
       categories: z.array(z.string().max(40)).max(22),
       min: z.number().min(0).max(1e12).nullable(),
       active: z.boolean(),
+      cpv: z.array(z.string().regex(/^\d{8}$/)).max(20).optional(),
+      exclude: z.string().max(200).optional(),
     }),
   )
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string; max?: number }> => {
@@ -381,8 +384,15 @@ export const saveRadar = createServerFn({ method: "POST" })
       p_categories: data.categories,
       p_min_value: data.min,
       p_active: data.active,
+      p_cpv: data.cpv ?? [],
+      p_exclude: data.exclude ?? null,
     });
   });
+
+/** Cerca i codici CPV per descrizione o per codice, con il numero di gare aperte in ogni ramo. */
+export const searchCpv = createServerFn({ method: "GET" })
+  .validator(z.object({ q: z.string().min(2).max(80) }))
+  .handler(async ({ data }): Promise<CpvHit[]> => rpc<CpvHit[]>("gc_cpv_search", { p_q: data.q }));
 
 export const radarAction = createServerFn({ method: "POST" })
   .validator(

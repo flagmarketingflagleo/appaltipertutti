@@ -117,6 +117,12 @@ function Prezzi() {
                 <td>Tutte</td>
               </tr>
               <tr>
+                <th scope="row">Filtri precisi: codici CPV e parole da escludere</th>
+                <td>No</td>
+                <td>Sì</td>
+                <td>Sì</td>
+              </tr>
+              <tr>
                 <th scope="row">Gare preferite con promemoria a 30, 10 e 5 giorni dalla scadenza</th>
                 <td>No</td>
                 <td>Sì</td>
@@ -163,6 +169,13 @@ function Prezzi() {
         <p>
           Entro 14 giorni dal primo pagamento puoi chiedere il rimborso completo:{" "}
           <Link to="/rimborsi">come funzionano rimborsi e disdetta</Link>.
+        </p>
+        <h2>Che cosa sono i filtri precisi</h2>
+        <p>
+          Il CPV (Common Procurement Vocabulary) è il codice europeo con cui ogni ente classifica ciò che
+          compra: 90910000 sono i servizi di pulizia, 45000000 i lavori di costruzione, 79340000 i servizi
+          pubblicitari. Con Pro e Studio scegli i codici della tua attività e le parole da escludere: il
+          radar segnala solo le gare classificate così, senza rumore.
         </p>
         <h2>Che cosa non è incluso</h2>
         <p>

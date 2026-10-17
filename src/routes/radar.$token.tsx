@@ -239,7 +239,7 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
         setNote(active ? "Radar salvato. L'elenco delle gare è aggiornato." : "Radar eliminato.");
         await router.invalidate();
       } else if (res.error === "free_limits") {
-        setNote("Il radar gratuito segue una sola regione: scegline una. Con Pro segui tutta Italia e più settori.");
+        setNote("Il radar gratuito segue un settore in una regione: scegline uno per ciascuno. Con Pro segui tutta Italia e più settori.");
       } else {
         setNote("Il radar non è stato salvato. Riprova tra poco.");
       }
@@ -273,21 +273,6 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
               onChange={(e) => setLabel(e.target.value)}
               maxLength={60}
             />
-          </div>
-          <div className="gc-campo">
-            <label htmlFor={`${uid}-cosa`}>Cosa fa la tua impresa?</label>
-            <textarea
-              id={`${uid}-cosa`}
-              className="gc-textarea"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              maxLength={300}
-              placeholder="es. pulizie, sanificazione, disinfestazione"
-              aria-describedby={`${uid}-cosa-aiuto`}
-            />
-            <span id={`${uid}-cosa-aiuto`} className="gc-aiuto">
-              Separa con una virgola le attività diverse.
-            </span>
           </div>
           {paid ? (
             <>
@@ -327,28 +312,63 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
               </details>
             </>
           ) : (
-            <div className="gc-campo">
-              <label htmlFor={`${uid}-regione`}>Regione</label>
-              <select
-                id={`${uid}-regione`}
-                className="gc-select"
-                value={regions[0] ?? ""}
-                onChange={(e) => setRegions(e.target.value ? [e.target.value] : [])}
-                required
-              >
-                <option value="">Scegli la regione</option>
-                {REGIONS.map((r) => (
-                  <option key={r.slug} value={r.slug}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-              <span className="gc-aiuto">
-                Il radar gratuito segue le tue parole in una regione. Con Pro scegli tutta Italia e aggiungi
-                settori, codici CPV e parole da escludere.
-              </span>
+            <div className="gc-due-campi">
+              <div className="gc-campo">
+                <label htmlFor={`${uid}-settore`}>Settore</label>
+                <select
+                  id={`${uid}-settore`}
+                  className="gc-select"
+                  value={categories[0] ?? ""}
+                  onChange={(e) => setCategories(e.target.value ? [e.target.value] : [])}
+                  required
+                >
+                  <option value="">Scegli il settore</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="gc-campo">
+                <label htmlFor={`${uid}-regione`}>Regione</label>
+                <select
+                  id={`${uid}-regione`}
+                  className="gc-select"
+                  value={regions[0] ?? ""}
+                  onChange={(e) => setRegions(e.target.value ? [e.target.value] : [])}
+                  required
+                >
+                  <option value="">Scegli la regione</option>
+                  {REGIONS.map((r) => (
+                    <option key={r.slug} value={r.slug}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="gc-aiuto">
+                Il radar gratuito segue un settore in una regione. Con Pro scegli tutta Italia, più settori,
+                codici CPV e parole da escludere.
+              </p>
             </div>
           )}
+          <div className="gc-campo">
+            <label htmlFor={`${uid}-cosa`}>Parole chiave (facoltative)</label>
+            <input
+              id={`${uid}-cosa`}
+              type="text"
+              className="gc-input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              maxLength={300}
+              placeholder="es. pulizie, sanificazione, disinfestazione"
+              aria-describedby={`${uid}-cosa-aiuto`}
+            />
+            <span id={`${uid}-cosa-aiuto`} className="gc-aiuto">
+              Restringono il settore alle gare che le contengono; separa con una virgola. Vuote: tutto il settore.
+            </span>
+          </div>
           {paid ? (
             <FiltriCpv
               uid={uid}
@@ -404,39 +424,12 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
           ) : null}
         </form>
         <div style={{ display: "grid", gap: "1rem" }}>
-          {p.matches.no_category || p.matches.no_region ? (
-            <div className="gc-nota">
-              <p>
-                {p.matches.no_category && p.matches.no_region
-                  ? "Con queste parole non c'è nessuna gara aperta nel settore e nella regione scelti: qui sotto vedi quelle di tutta Italia, in tutti i settori."
-                  : p.matches.no_category
-                    ? `Nel settore scelto non c'è nessuna gara aperta con queste parole: qui sotto vedi quelle degli altri settori${regions.length === 1 ? " nella tua regione" : ""}.`
-                    : "Nella regione scelta non c'è nessuna gara aperta con queste parole: qui sotto vedi quelle del resto d'Italia."}
-                {p.matches.suggest_category && p.matches.suggest_category_name && !categories.includes(p.matches.suggest_category) ? (
-                  <>
-                    {" "}
-                    Il settore giusto sembra <strong>{p.matches.suggest_category_name}</strong>.
-                  </>
-                ) : null}
-              </p>
-              {p.matches.suggest_category && !categories.includes(p.matches.suggest_category) ? (
-                <p>
-                  <button
-                    type="button"
-                    className="gc-btn gc-btn--piccolo"
-                    disabled={busy}
-                    onClick={() => {
-                      const slug = p.matches.suggest_category as string;
-                      const nuove = paid ? toggle(categories, slug) : [slug];
-                      setCategories(nuove);
-                      void save(true, nuove);
-                    }}
-                  >
-                    Usa il settore «{p.matches.suggest_category_name}»
-                  </button>
-                </p>
-              ) : null}
-            </div>
+          {p.matches.no_words ? (
+            <p className="gc-nota">
+              Nessuna gara aperta contiene le tue parole chiave: qui sotto vedi tutte le gare del settore
+              {regions.length === 1 ? " nella tua regione" : ""}. Le parole restano salvate: appena esce una gara che le
+              contiene, la trovi in cima.
+            </p>
           ) : p.matches.relaxed ? (
             <p className="gc-nota">
               Nessuna gara contiene tutte le parole insieme: qui sotto trovi quelle che ne
@@ -448,8 +441,10 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
           ) : (
             <div className="gc-vuoto">
               <p>
-                Nessuna gara aperta corrisponde a questo radar. Prova con meno parole o con più
-                regioni: appena esce una gara adatta la trovi qui.
+                Oggi nessuna gara aperta corrisponde a questo radar
+                {regions.length === 1 ? ` in ${REGIONS.find((r) => r.slug === regions[0])?.name ?? "questa regione"}` : ""}.
+                {p.matches.elsewhere ? ` Nel resto d'Italia ce ne sono ${fmtInt(p.matches.elsewhere)}${paid ? ": aggiungi regioni al radar per vederle" : ", che con Pro puoi seguire"}.` : ""}{" "}
+                Appena ne esce una adatta la trovi qui e, se hai confermato l'email, te la segnaliamo.
               </p>
             </div>
           )}
@@ -824,7 +819,7 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
         ) : upgrades.length > 0 ? (
           <>
             <p>
-              Con Pro segui tutta Italia, filtri per settore e codici CPV, hai fino a {plans.pro.profiles} radar,
+              Con Pro segui tutta Italia, più settori e codici CPV, hai fino a {plans.pro.profiles} radar,
               vedi l'elenco completo delle gare, salvi le preferite con il promemoria della scadenza e scarichi tutto in CSV.
             </p>
             {promoAttiva && plans.pro.discount_month ? (

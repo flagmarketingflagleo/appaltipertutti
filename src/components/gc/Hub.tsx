@@ -57,7 +57,7 @@ export function Hub({ title, intro, total, items, all, crossTitle, cross, radarT
             {intro}
           </div>
           <div className="gc-pannello">
-            <RadarForm id={`radar-${origin}`} origin={origin} regione={all.regione} />
+            <RadarForm id={`radar-${origin}`} origin={origin} regione={all.regione} settore={all.settore} />
           </div>
         </div>
       </section>

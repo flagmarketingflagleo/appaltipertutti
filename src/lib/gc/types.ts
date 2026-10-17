@@ -219,13 +219,10 @@ export type RadarProfile = {
     total: number;
     items: Card[];
     relaxed?: boolean;
-    /** nessuna gara nel settore scelto: l'elenco ignora il settore */
-    no_category?: boolean;
-    /** nessuna gara nella regione scelta: l'elenco mostra il resto d'Italia */
-    no_region?: boolean;
-    /** settore in cui le parole del radar compaiono di più */
-    suggest_category?: string | null;
-    suggest_category_name?: string | null;
+    /** le parole chiave non trovavano nulla: l'elenco mostra tutto il settore nella regione */
+    no_words?: boolean;
+    /** quando nella regione non c'è nulla: quante gare ci sono nel resto d'Italia */
+    elsewhere?: number;
   };
 };
 

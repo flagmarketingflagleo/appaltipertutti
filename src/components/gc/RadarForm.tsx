@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
 import { subscribe } from "@/lib/gc/api.functions";
-import { REGIONS } from "@/lib/gc/config";
+import { CATEGORIES, REGIONS } from "@/lib/gc/config";
 
 import { useSettings } from "./Page";
 
@@ -10,6 +10,7 @@ const ERRORS: Record<string, string> = {
   consent: "Per attivare il radar serve la conferma qui sotto.",
   email: "Controlla l'indirizzo email: sembra incompleto.",
   company: "Scrivi il nome della tua impresa.",
+  category: "Scegli il settore della tua impresa: il radar gratuito ne segue uno.",
   region: "Scegli la regione in cui lavori: il radar gratuito ne segue una.",
   busy: "Ci sono troppe richieste in questo momento. Riprova tra qualche minuto.",
   closed: "Le iscrizioni non sono ancora aperte.",
@@ -18,6 +19,7 @@ const ERRORS: Record<string, string> = {
 type Props = {
   q?: string;
   regione?: string;
+  settore?: string;
   origin: string;
   /** piano scelto nella pagina prezzi: dopo l'attivazione si apre subito l'acquisto */
   piano?: "pro" | "studio";
@@ -26,12 +28,13 @@ type Props = {
   id: string;
 };
 
-export function RadarForm({ q, regione, origin, full = false, id, piano }: Props) {
+export function RadarForm({ q, regione, settore, origin, full = false, id, piano }: Props) {
   const settings = useSettings();
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
   const [what, setWhat] = useState(q ?? "");
   const [place, setPlace] = useState(regione ?? "");
+  const [sector, setSector] = useState(settore ?? "");
   const [consent, setConsent] = useState(false);
   const [hp, setHp] = useState("");
   const [sending, setSending] = useState(false);
@@ -59,6 +62,10 @@ export function RadarForm({ q, regione, origin, full = false, id, piano }: Props
       setError(ERRORS.company);
       return;
     }
+    if (!sector) {
+      setError(ERRORS.category);
+      return;
+    }
     if (!place) {
       setError(ERRORS.region);
       return;
@@ -75,6 +82,7 @@ export function RadarForm({ q, regione, origin, full = false, id, piano }: Props
           company: company.trim(),
           q: (full ? what : (q ?? "")).trim() || undefined,
           regione: place || undefined,
+          settore: sector || undefined,
           consent,
           origin,
           hp,
@@ -103,25 +111,6 @@ export function RadarForm({ q, regione, origin, full = false, id, piano }: Props
 
   return (
     <form className="gc-modulo" onSubmit={onSubmit} noValidate>
-      {full ? (
-        <>
-          <div className="gc-campo">
-            <label htmlFor={`${id}-cosa`}>Cosa fa la tua impresa?</label>
-            <textarea
-              id={`${id}-cosa`}
-              className="gc-textarea"
-              value={what}
-              onChange={(e) => setWhat(e.target.value)}
-              placeholder="es. pulizie, sanificazione, disinfestazione"
-              maxLength={300}
-              aria-describedby={`${id}-cosa-aiuto`}
-            />
-            <span id={`${id}-cosa-aiuto`} className="gc-aiuto">
-              Separa con una virgola le attività diverse.
-            </span>
-          </div>
-        </>
-      ) : null}
       <div className="gc-campo">
         <label htmlFor={`${id}-impresa`}>Nome dell'impresa</label>
         <input
@@ -135,26 +124,63 @@ export function RadarForm({ q, regione, origin, full = false, id, piano }: Props
           required
         />
       </div>
-      <div className="gc-campo">
-        <label htmlFor={`${id}-dove`}>Regione in cui lavori</label>
-        <select
-          id={`${id}-dove`}
-          className="gc-select"
-          value={place}
-          onChange={(e) => setPlace(e.target.value)}
-          required
-        >
-          <option value="">Scegli la regione</option>
-          {REGIONS.map((r) => (
-            <option key={r.slug} value={r.slug}>
-              {r.name}
-            </option>
-          ))}
-        </select>
+      <div className="gc-due-campi">
+        <div className="gc-campo">
+          <label htmlFor={`${id}-settore`}>Settore della tua impresa</label>
+          <select
+            id={`${id}-settore`}
+            className="gc-select"
+            value={sector}
+            onChange={(e) => setSector(e.target.value)}
+            required
+          >
+            <option value="">Scegli il settore</option>
+            {CATEGORIES.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="gc-campo">
+          <label htmlFor={`${id}-dove`}>Regione in cui lavori</label>
+          <select
+            id={`${id}-dove`}
+            className="gc-select"
+            value={place}
+            onChange={(e) => setPlace(e.target.value)}
+            required
+          >
+            <option value="">Scegli la regione</option>
+            {REGIONS.map((r) => (
+              <option key={r.slug} value={r.slug}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
+      {full ? (
+        <div className="gc-campo">
+          <label htmlFor={`${id}-cosa`}>Parole chiave (facoltative)</label>
+          <input
+            id={`${id}-cosa`}
+            type="text"
+            className="gc-input"
+            value={what}
+            onChange={(e) => setWhat(e.target.value)}
+            placeholder="es. pulizie, sanificazione"
+            maxLength={300}
+            aria-describedby={`${id}-cosa-aiuto`}
+          />
+          <span id={`${id}-cosa-aiuto`} className="gc-aiuto">
+            Restringono il settore alle gare che le contengono. Lasciale vuote per vedere tutto il settore.
+          </span>
+        </div>
+      ) : null}
       <p className="gc-aiuto">
-        Il radar gratuito segue le tue parole in una regione. Con Pro segui tutta Italia, aggiungi settori
-        e codici CPV e vedi tutte le gare.
+        Il radar gratuito segue un settore in una regione. Con Pro segui tutta Italia, più settori, codici
+        CPV e vedi tutte le gare.
       </p>
       <div className="gc-campo">
         <label htmlFor={`${id}-email`}>La tua email di lavoro</label>

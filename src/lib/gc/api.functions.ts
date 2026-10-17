@@ -179,7 +179,7 @@ export const searchTenders = createServerFn({ method: "GET" })
     const muro = leggiIntestazione("x-apt-muro") === "1";
     // Una sola chiamata: il database cerca e, se richiesto, registra la ricerca con il numero
     // di gare trovate (le ricerche a zero dicono quali parole mancano al dizionario).
-    return rpc<SearchResult>("gc_search_logged", {
+    const r = await rpc<SearchResult>("gc_search_logged", {
       p_token: token,
       p_muro: muro,
       p_q: q,
@@ -194,6 +194,9 @@ export const searchTenders = createServerFn({ method: "GET" })
       p_offset: (page - 1) * limit,
       p_log: data.log === true && page === 1,
     });
+    // Radar non confermato: la pagina deve poter rimandare alla pagina personale.
+    if (r.wall && r.wall_reason === "confirm" && token) r.radar_token = token;
+    return r;
   });
 
 export const favoriteState = createServerFn({ method: "GET" })

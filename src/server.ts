@@ -122,7 +122,9 @@ export default {
       // come intestazioni, così la ricerca sa quante gare mostrare.
       const tokenRadar = UUID.test(cookie(request, "apt_radar") ?? "") ? (cookie(request, "apt_radar") as string) : null;
       const ricerche = Number.parseInt(cookie(request, "apt_ricerche") ?? "0", 10) || 0;
-      const muro = !tokenRadar && ricerche >= 1;
+      // Il muro scatta dalla seconda ricerca con filtri. Vale anche per chi ha il radar ma non ha
+      // ancora confermato l'indirizzo: è il database a sapere chi è confermato e a ignorare il muro.
+      const muro = ricerche >= 1;
       const intestazioni = new Headers(request.headers);
       intestazioni.delete("x-apt-token");
       intestazioni.delete("x-apt-muro");
@@ -139,7 +141,7 @@ export default {
       const radarInUrl = /^\/radar\/([0-9a-f-]{36})$/i.exec(url.pathname)?.[1] ?? null;
       if (radarInUrl && UUID.test(radarInUrl) && radarInUrl !== tokenRadar) daImpostare.push(setCookie("apt_radar", radarInUrl));
       const ricercaFiltrata = url.pathname === "/cerca" && FILTRI.some((f) => (url.searchParams.get(f) ?? "") !== "");
-      if (request.method === "GET" && ricercaFiltrata && !tokenRadar && !muro) daImpostare.push(setCookie("apt_ricerche", String(ricerche + 1)));
+      if (request.method === "GET" && ricercaFiltrata && !muro) daImpostare.push(setCookie("apt_ricerche", String(ricerche + 1)));
 
       // La copia condivisa vale solo per chi non ha cookie nostri: le pagine degli altri sono personali.
       const personale = tokenRadar !== null || ricerche > 0;

@@ -205,7 +205,26 @@ function Cerca() {
       </div>
 
       <section className="gc-wrap" style={{ paddingTop: "1.75rem" }} aria-label="Risultati">
-        {res.wall ? (
+        {res.wall && res.wall_reason === "confirm" ? (
+          <div className="gc-muro" id="radar">
+            <div className="gc-prosa">
+              <h2 style={{ fontSize: "var(--t-xl)", marginTop: 0 }}>
+                {plural(res.total, "gara aperta corrisponde", "gare aperte corrispondono")} a questa ricerca
+              </h2>
+              <p>
+                Il tuo radar è attivato ma l'indirizzo email non è ancora confermato. Apri l'email che ti
+                abbiamo mandato e premi «Conferma e apri il radar»: da quel momento cerchi quanto vuoi.
+              </p>
+              <p className="gc-azioni">
+                {res.radar_token ? (
+                  <Link to="/radar/$token" params={{ token: res.radar_token }} className="gc-btn">
+                    Non trovi l'email? Fattela rimandare
+                  </Link>
+                ) : null}
+              </p>
+            </div>
+          </div>
+        ) : res.wall ? (
           <div className="gc-muro" id="radar">
             <div className="gc-prosa">
               <h2 style={{ fontSize: "var(--t-xl)", marginTop: 0 }}>
@@ -213,8 +232,8 @@ function Cerca() {
               </h2>
               <p>
                 La prima ricerca è libera. Per vedere queste gare attiva il radar gratuito: ti bastano
-                l'email, il nome dell'impresa, il settore e la regione. Da quel momento cerchi quanto vuoi
-                e il radar ti tiene da parte le gare nuove.
+                l'email, il nome dell'impresa, il settore e la regione, poi confermi l'indirizzo dall'email
+                che ti arriva. Da quel momento cerchi quanto vuoi e il radar ti tiene da parte le gare nuove.
               </p>
               <p className="gc-tenue">
                 Gratis vedi le {res.cap ?? 10} gare più recenti di ogni ricerca. Con Pro le vedi tutte,

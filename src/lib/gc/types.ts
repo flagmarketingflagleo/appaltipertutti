@@ -35,6 +35,10 @@ export type SearchResult = {
   also?: string[];
   /** seconda ricerca di un visitatore senza radar: solo il conto, niente elenco */
   wall?: boolean;
+  /** perché c'è il muro: "signup" (visitatore senza radar) o "confirm" (radar non ancora confermato) */
+  wall_reason?: "signup" | "confirm";
+  /** token del radar del visitatore, aggiunto dal server quando il muro chiede la conferma */
+  radar_token?: string;
   /** chi non paga vede solo le prime `cap` gare */
   capped?: boolean;
   cap?: number;

@@ -398,10 +398,10 @@ export const radarAction = createServerFn({ method: "POST" })
   .validator(
     z.object({
       token: z.string().regex(UUID),
-      action: z.enum(["unsubscribe", "resubscribe", "erase"]),
+      action: z.enum(["unsubscribe", "resubscribe", "erase", "resend"]),
     }),
   )
-  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+  .handler(async ({ data }): Promise<{ ok: boolean; error?: string; already?: boolean }> => {
     return rpc("gc_radar_action", { p_token: data.token, p_action: data.action });
   });
 

@@ -85,6 +85,7 @@ function toggle(list: string[], value: string): string[] {
 function RadarPage() {
   const data = Route.useLoaderData();
   const { token } = Route.useParams();
+  const { emailEnabled } = useSettings();
   if (!data.ok) {
     const tecnico = data.error === "tecnico";
     return (
@@ -107,10 +108,89 @@ function RadarPage() {
       </Page>
     );
   }
+  // Prima della conferma dell'indirizzo il radar resta chiuso: la pagina chiede di aprire l'email.
+  // L'email viene inviata solo se la posta è configurata; altrimenti il radar si apre subito.
+  if (!data.subscriber.confirmed && emailEnabled) {
+    return (
+      <Page>
+        <Conferma data={data} token={token} />
+      </Page>
+    );
+  }
   return (
     <Page>
       <RadarBody data={data} token={token} />
     </Page>
+  );
+}
+
+/** Schermata di attesa: il radar si apre dopo che l'iscritto ha confermato l'indirizzo dall'email. */
+function Conferma({ data, token }: { data: RadarOk; token: string }) {
+  const settings = useSettings();
+  const router = useRouter();
+  const { compra } = Route.useSearch();
+  const [busy, setBusy] = useState(false);
+  const [nota, setNota] = useState<string | null>(null);
+  const email = data.subscriber.email;
+
+  // Quando conferma da un'altra scheda, questa si accorge da sola del cambiamento.
+  useEffect(() => {
+    const timer = window.setInterval(() => void router.invalidate(), 8000);
+    return () => window.clearInterval(timer);
+  }, [router]);
+
+  async function rimanda() {
+    setBusy(true);
+    setNota(null);
+    try {
+      const res = await radarAction({ data: { token, action: "resend" } });
+      if (res.ok) setNota(`Email inviata di nuovo a ${email}. Controlla anche la posta indesiderata.`);
+      else if (res.error === "wait") setNota("L'abbiamo appena inviata: aspetta un paio di minuti e controlla anche la posta indesiderata.");
+      else setNota("Non è stato possibile inviare l'email. Riprova tra poco.");
+    } catch {
+      setNota("Non è stato possibile inviare l'email per un problema tecnico. Riprova tra poco.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="gc-wrap gc-testata">
+      <h1>Conferma il tuo indirizzo email</h1>
+      <p className="gc-testata__sotto">
+        Ti abbiamo scritto a <strong>{email}</strong>. Apri l'email e premi «Conferma e apri il radar»:
+        il tuo radar si apre da quella pagina. Torna qui quando avrai confermato.
+      </p>
+      <div className="gc-nota" style={{ maxWidth: "46rem" }}>
+        <p>
+          Senza conferma il radar non parte e gli avvisi non vengono inviati. L'email arriva entro un
+          minuto
+          {compra ? "; dopo la conferma troverai il pagamento del piano scelto nella tua pagina" : ""}.
+        </p>
+      </div>
+      <p className="gc-azioni">
+        <button type="button" className="gc-btn" disabled={busy} onClick={() => void router.invalidate()}>
+          Ho confermato, apri il radar
+        </button>
+        <button type="button" className="gc-btn gc-btn--linea" disabled={busy} onClick={() => void rimanda()}>
+          Non è arrivata, inviala di nuovo
+        </button>
+      </p>
+      {nota ? (
+        <p className="gc-esito" role="status">
+          {nota}
+        </p>
+      ) : null}
+      <p className="gc-tenue gc-piccolo">
+        Indirizzo sbagliato? <Link to="/radar">Attiva un nuovo radar</Link> con quello giusto.
+        {settings.contactEmail ? (
+          <>
+            {" "}
+            Problemi? Scrivi a <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>.
+          </>
+        ) : null}
+      </p>
+    </div>
   );
 }
 

@@ -217,7 +217,7 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
   const uid = `r${p.id}`;
   const hidden = p.matches.total - p.matches.items.length;
 
-  async function save(active: boolean) {
+  async function save(active: boolean, nuoveCategorie?: string[]) {
     setBusy(true);
     setNote(null);
     try {
@@ -228,7 +228,7 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
           label: label.trim() || undefined,
           q: q.trim() || undefined,
           regions,
-          categories,
+          categories: nuoveCategorie ?? categories,
           min: min ? Number(min) : null,
           active,
           cpv: paid ? cpv : [],
@@ -236,7 +236,7 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
         },
       });
       if (res.ok) {
-        setNote(active ? "Radar salvato. L'elenco qui accanto è aggiornato." : "Radar eliminato.");
+        setNote(active ? "Radar salvato. L'elenco delle gare è aggiornato." : "Radar eliminato.");
         await router.invalidate();
       } else if (res.error === "free_limits") {
         setNote("Il radar gratuito segue una regione e un settore: scegline uno per ciascuno. Con Pro segui tutta Italia e più settori.");
@@ -422,7 +422,40 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
           ) : null}
         </form>
         <div style={{ display: "grid", gap: "1rem" }}>
-          {p.matches.relaxed ? (
+          {p.matches.no_category || p.matches.no_region ? (
+            <div className="gc-nota">
+              <p>
+                {p.matches.no_category && p.matches.no_region
+                  ? "Con queste parole non c'è nessuna gara aperta nel settore e nella regione scelti: qui sotto vedi quelle di tutta Italia, in tutti i settori."
+                  : p.matches.no_category
+                    ? `Nel settore scelto non c'è nessuna gara aperta con queste parole: qui sotto vedi quelle degli altri settori${regions.length === 1 ? " nella tua regione" : ""}.`
+                    : "Nella regione scelta non c'è nessuna gara aperta con queste parole: qui sotto vedi quelle del resto d'Italia."}
+                {p.matches.suggest_category && p.matches.suggest_category_name && !categories.includes(p.matches.suggest_category) ? (
+                  <>
+                    {" "}
+                    Il settore giusto sembra <strong>{p.matches.suggest_category_name}</strong>.
+                  </>
+                ) : null}
+              </p>
+              {p.matches.suggest_category && !categories.includes(p.matches.suggest_category) ? (
+                <p>
+                  <button
+                    type="button"
+                    className="gc-btn gc-btn--piccolo"
+                    disabled={busy}
+                    onClick={() => {
+                      const slug = p.matches.suggest_category as string;
+                      const nuove = paid ? toggle(categories, slug) : [slug];
+                      setCategories(nuove);
+                      void save(true, nuove);
+                    }}
+                  >
+                    Usa il settore «{p.matches.suggest_category_name}»
+                  </button>
+                </p>
+              ) : null}
+            </div>
+          ) : p.matches.relaxed ? (
             <p className="gc-nota">
               Nessuna gara contiene tutte le parole insieme: qui sotto trovi quelle che ne
               contengono almeno una.

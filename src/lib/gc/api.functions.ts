@@ -392,6 +392,13 @@ export const saveRadar = createServerFn({ method: "POST" })
     });
   });
 
+/** Settore in cui le parole scritte dall'impresa compaiono di più (per precompilare il modulo). */
+export const suggestCategory = createServerFn({ method: "GET" })
+  .validator(z.object({ q: z.string().min(3).max(300) }))
+  .handler(async ({ data }): Promise<{ ok: boolean; slug?: string; name?: string; n?: number }> =>
+    rpc("gc_suggest_category", { p_q: data.q }),
+  );
+
 /** Cerca i codici CPV per descrizione o per codice, con il numero di gare aperte in ogni ramo. */
 export const searchCpv = createServerFn({ method: "GET" })
   .validator(z.object({ q: z.string().min(2).max(80) }))

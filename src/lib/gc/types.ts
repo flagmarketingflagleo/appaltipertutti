@@ -215,7 +215,18 @@ export type RadarProfile = {
   cpv_labels?: Record<string, string>;
   /** parole da escludere, separate da virgola (solo piani a pagamento) */
   exclude?: string | null;
-  matches: { total: number; items: Card[]; relaxed?: boolean };
+  matches: {
+    total: number;
+    items: Card[];
+    relaxed?: boolean;
+    /** nessuna gara nel settore scelto: l'elenco ignora il settore */
+    no_category?: boolean;
+    /** nessuna gara nella regione scelta: l'elenco mostra il resto d'Italia */
+    no_region?: boolean;
+    /** settore in cui le parole del radar compaiono di più */
+    suggest_category?: string | null;
+    suggest_category_name?: string | null;
+  };
 };
 
 export type CpvHit = { code: string; label: string; open: number };

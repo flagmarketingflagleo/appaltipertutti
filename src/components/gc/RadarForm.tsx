@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
-import { subscribe } from "@/lib/gc/api.functions";
+import { subscribe, suggestCategory } from "@/lib/gc/api.functions";
 import { CATEGORIES, REGIONS } from "@/lib/gc/config";
 
 import { useSettings } from "./Page";
@@ -35,6 +35,27 @@ export function RadarForm({ q, regione, settore, origin, full = false, id, piano
   const [what, setWhat] = useState(q ?? "");
   const [place, setPlace] = useState(regione ?? "");
   const [sector, setSector] = useState(settore ?? "");
+  // Il settore lo propone il sito dalle parole scritte, finché l'impresa non lo sceglie a mano.
+  const [sectorManuale, setSectorManuale] = useState(Boolean(settore));
+  const [suggerito, setSuggerito] = useState<string | null>(null);
+  const parole = (full ? what : (q ?? "")).trim();
+  useEffect(() => {
+    if (sectorManuale || parole.length < 3) return;
+    let vivo = true;
+    const timer = window.setTimeout(() => {
+      suggestCategory({ data: { q: parole } })
+        .then((r) => {
+          if (!vivo || !r.ok || !r.slug) return;
+          setSector(r.slug);
+          setSuggerito(r.name ?? null);
+        })
+        .catch(() => undefined);
+    }, 500);
+    return () => {
+      vivo = false;
+      window.clearTimeout(timer);
+    };
+  }, [parole, sectorManuale]);
   const [consent, setConsent] = useState(false);
   const [hp, setHp] = useState("");
   const [sending, setSending] = useState(false);
@@ -150,8 +171,13 @@ export function RadarForm({ q, regione, settore, origin, full = false, id, piano
             id={`${id}-settore`}
             className="gc-select"
             value={sector}
-            onChange={(e) => setSector(e.target.value)}
+            onChange={(e) => {
+              setSector(e.target.value);
+              setSectorManuale(true);
+              setSuggerito(null);
+            }}
             required
+            aria-describedby={suggerito ? `${id}-settore-aiuto` : undefined}
           >
             <option value="">Scegli il settore</option>
             {CATEGORIES.map((c) => (
@@ -160,6 +186,11 @@ export function RadarForm({ q, regione, settore, origin, full = false, id, piano
               </option>
             ))}
           </select>
+          {suggerito ? (
+            <span id={`${id}-settore-aiuto`} className="gc-aiuto">
+              Proposto dalle tue parole: è il settore in cui compaiono di più. Puoi cambiarlo.
+            </span>
+          ) : null}
         </div>
         <div className="gc-campo">
           <label htmlFor={`${id}-dove`}>Regione in cui lavori</label>

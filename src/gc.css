@@ -184,7 +184,7 @@ body.gc {
 
 /* registro delle gare */
 .gc-registro { list-style: none; border-bottom: 1px solid var(--riga); }
-.gc-riga { display: grid; grid-template-columns: minmax(0, 1fr) 8.5rem 12rem; gap: 0.35rem 1.75rem; padding-block: 1.05rem; border-top: 1px solid var(--riga); align-items: start; }
+.gc-riga { display: grid; grid-template-columns: minmax(0, 1fr) 9rem 12rem; gap: 0.35rem 1.5rem; padding-block: 1.05rem; border-top: 1px solid var(--riga); align-items: start; }
 .gc-riga__link { display: block; text-decoration: none; }
 .gc-riga__chiaro { display: block; font-weight: 700; line-height: 1.3; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.18em; text-decoration-color: color-mix(in srgb, var(--inchiostro) 35%, transparent); }
 .gc-riga__link:hover .gc-riga__chiaro { text-decoration-color: var(--inchiostro); }
@@ -192,7 +192,7 @@ body.gc {
 .gc-riga__chi { margin-top: 0.3rem; font-size: var(--t-s); color: var(--tenue); }
 .gc-riga__quanto, .gc-riga__quando { display: grid; gap: 0.1rem; font-variant-numeric: tabular-nums; }
 .gc-riga__quanto { text-align: right; }
-.gc-riga__val, .gc-riga__scad { font-weight: 700; white-space: nowrap; }
+.gc-riga__val, .gc-riga__scad { font-weight: 700; overflow-wrap: anywhere; }
 .gc-riga__scad--vicina { color: var(--scadenza); }
 .gc-riga__sub { font-size: var(--t-s); color: var(--tenue); }
 .gc-vuoto { padding-block: 2rem; display: grid; gap: 0.6rem; max-width: 60ch; }

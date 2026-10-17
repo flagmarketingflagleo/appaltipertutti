@@ -30,7 +30,7 @@ export function fmtEuro(n: number | null | undefined): string {
 }
 
 export function fmtEuroShort(n: number | null | undefined): string {
-  if (n == null || Number.isNaN(n)) return "importo non indicato";
+  if (n == null || Number.isNaN(n)) return "importo n.d.";
   if (n >= 1_000_000_000) return `${dec(n / 1_000_000_000)} mld €`;
   if (n >= 1_000_000) return `${dec(n / 1_000_000)} mln €`;
   if (n >= 10_000) return `${fmtInt(Math.round(n / 1000))} mila €`;
@@ -54,7 +54,7 @@ export function fmtTime(local: string | null | undefined): string {
 }
 
 export function deadlineLabel(days: number | null | undefined): string {
-  if (days == null) return "senza scadenza indicata";
+  if (days == null) return "senza scadenza";
   if (days < 0) return "scaduta";
   if (days === 0) return "scade oggi";
   if (days === 1) return "scade domani";

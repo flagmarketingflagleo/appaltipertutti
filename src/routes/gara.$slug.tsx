@@ -277,7 +277,6 @@ function Scheda() {
             id="radar-gara"
             origin="gara"
             regione={t.region ?? undefined}
-            settore={t.category ?? undefined}
           />
         </aside>
       </div>

@@ -162,12 +162,12 @@ export function FiltriCpv({ uid, cpv, labels, exclude, onCpv, onExclude }: Props
 export function FiltriCpvChiusi() {
   return (
     <details className="gc-dettagli">
-      <summary>Filtri precisi: codici CPV e parole da escludere (con Pro)</summary>
+      <summary>Filtri precisi: settori, codici CPV e parole da escludere (con Pro)</summary>
       <div style={{ display: "grid", gap: "0.6rem", paddingTop: "0.6rem" }}>
         <CosaEIlCpv />
         <p className="gc-aiuto">
-          Con il piano Pro scegli i tuoi codici CPV e le parole da escludere: il radar segnala solo le gare
-          che fanno davvero per te e non ti fa perdere tempo con le altre.{" "}
+          Con il piano Pro aggiungi alle parole i settori, i tuoi codici CPV e le parole da escludere: il
+          radar segnala solo le gare che fanno davvero per te e non ti fa perdere tempo con le altre.{" "}
           <Link to="/prezzi">Vedi i piani</Link>
         </p>
       </div>

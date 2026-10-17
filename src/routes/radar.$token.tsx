@@ -239,7 +239,7 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
         setNote(active ? "Radar salvato. L'elenco delle gare è aggiornato." : "Radar eliminato.");
         await router.invalidate();
       } else if (res.error === "free_limits") {
-        setNote("Il radar gratuito segue una regione e un settore: scegline uno per ciascuno. Con Pro segui tutta Italia e più settori.");
+        setNote("Il radar gratuito segue una sola regione: scegline una. Con Pro segui tutta Italia e più settori.");
       } else {
         setNote("Il radar non è stato salvato. Riprova tra poco.");
       }
@@ -327,44 +327,26 @@ function Profilo({ p, token, paid, shown, canRemove }: ProfiloProps) {
               </details>
             </>
           ) : (
-            <div className="gc-due-campi">
-              <div className="gc-campo">
-                <label htmlFor={`${uid}-regione`}>Regione</label>
-                <select
-                  id={`${uid}-regione`}
-                  className="gc-select"
-                  value={regions[0] ?? ""}
-                  onChange={(e) => setRegions(e.target.value ? [e.target.value] : [])}
-                  required
-                >
-                  <option value="">Scegli la regione</option>
-                  {REGIONS.map((r) => (
-                    <option key={r.slug} value={r.slug}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="gc-campo">
-                <label htmlFor={`${uid}-settore`}>Settore</label>
-                <select
-                  id={`${uid}-settore`}
-                  className="gc-select"
-                  value={categories[0] ?? ""}
-                  onChange={(e) => setCategories(e.target.value ? [e.target.value] : [])}
-                  required
-                >
-                  <option value="">Scegli il settore</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c.slug} value={c.slug}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <p className="gc-aiuto">
-                Il radar gratuito segue una regione e un settore. Con Pro scegli tutta Italia e più settori.
-              </p>
+            <div className="gc-campo">
+              <label htmlFor={`${uid}-regione`}>Regione</label>
+              <select
+                id={`${uid}-regione`}
+                className="gc-select"
+                value={regions[0] ?? ""}
+                onChange={(e) => setRegions(e.target.value ? [e.target.value] : [])}
+                required
+              >
+                <option value="">Scegli la regione</option>
+                {REGIONS.map((r) => (
+                  <option key={r.slug} value={r.slug}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+              <span className="gc-aiuto">
+                Il radar gratuito segue le tue parole in una regione. Con Pro scegli tutta Italia e aggiungi
+                settori, codici CPV e parole da escludere.
+              </span>
             </div>
           )}
           {paid ? (
@@ -842,8 +824,8 @@ function RadarBody({ data, token }: { data: RadarOk; token: string }) {
         ) : upgrades.length > 0 ? (
           <>
             <p>
-              Con Pro segui tutta Italia e più settori, fino a {plans.pro.profiles} radar, vedi l'elenco
-              completo delle gare, salvi le preferite con il promemoria della scadenza e scarichi tutto in CSV.
+              Con Pro segui tutta Italia, filtri per settore e codici CPV, hai fino a {plans.pro.profiles} radar,
+              vedi l'elenco completo delle gare, salvi le preferite con il promemoria della scadenza e scarichi tutto in CSV.
             </p>
             {promoAttiva && plans.pro.discount_month ? (
               <p className="gc-nota">

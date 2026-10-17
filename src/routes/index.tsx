@@ -25,7 +25,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Quanto costa?",
-    a: "La ricerca è gratuita e senza registrazione. Anche il radar è gratuito: segue una regione e un settore e mostra le 10 gare più recenti. Il piano Pro costa 34,90 euro al mese e serve a chi vuole seguire tutta Italia e più settori, vedere tutte le gare e non perdere una scadenza. Senza IVA aggiunta.",
+    a: "La ricerca è gratuita e senza registrazione. Anche il radar è gratuito: segue le parole della tua attività in una regione e mostra le 10 gare più recenti. Il piano Pro costa 34,90 euro al mese e serve a chi vuole seguire tutta Italia e più settori, vedere tutte le gare e non perdere una scadenza. Senza IVA aggiunta.",
   },
   {
     q: "Come si partecipa a una gara?",

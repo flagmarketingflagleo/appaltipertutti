@@ -232,7 +232,7 @@ function Cerca() {
               </h2>
               <p>
                 La prima ricerca è libera. Per vedere queste gare attiva il radar gratuito: ti bastano
-                l'email, il nome dell'impresa, il settore e la regione, poi confermi l'indirizzo dall'email
+                l'email, il nome dell'impresa e la regione, poi confermi l'indirizzo dall'email
                 che ti arriva. Da quel momento cerchi quanto vuoi e il radar ti tiene da parte le gare nuove.
               </p>
               <p className="gc-tenue">
@@ -242,7 +242,7 @@ function Cerca() {
               </p>
             </div>
             <div className="gc-pannello">
-              <RadarForm id="radar-muro" origin="muro" q={search.q} regione={search.regione} settore={search.settore} full />
+              <RadarForm id="radar-muro" origin="muro" q={search.q} regione={search.regione} full />
             </div>
           </div>
         ) : res.items.length > 0 ? (
@@ -324,7 +324,6 @@ function Cerca() {
               origin="cerca"
               q={search.q}
               regione={search.regione}
-              settore={search.settore}
             />
           </div>
         </div>

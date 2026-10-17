@@ -7,7 +7,7 @@ import { fmtPrezzo } from "@/lib/gc/format";
 
 const TITLE = `Piani e prezzi del radar gare | ${SITE.name}`;
 const DESCRIPTION =
-  "Il radar gratuito segue una regione e un settore e mostra le 10 gare più recenti. Pro e Studio seguono tutta Italia, mostrano tutte le gare, avvisano ogni mattina e ricordano le scadenze. Si disdice quando si vuole.";
+  "Il radar gratuito segue le parole della tua attività in una regione e mostra le 10 gare più recenti. Pro e Studio seguono tutta Italia, filtrano per settore e codici CPV, mostrano tutte le gare, avvisano ogni mattina e ricordano le scadenze. Si disdice quando si vuole.";
 
 export const Route = createFileRoute("/prezzi")({
   head: () => ({
@@ -91,8 +91,8 @@ function Prezzi() {
       <div className="gc-wrap gc-testata">
         <h1>Piani e prezzi</h1>
         <p className="gc-testata__sotto">
-          Si parte gratis, con un radar su una regione e un settore. Paghi solo se vuoi seguire tutta
-          Italia, vedere tutte le gare e non perdere una scadenza.
+          Si parte gratis: scrivi cosa fa la tua impresa e in quale regione lavora. Paghi solo se vuoi
+          seguire tutta Italia, filtrare con precisione, vedere tutte le gare e non perdere una scadenza.
         </p>
       </div>
 
@@ -163,10 +163,10 @@ function Prezzi() {
               />
               <Riga
                 nome="Dove e cosa segue ogni radar"
-                valori={["Una regione, un settore", "Tutta Italia o le regioni che scegli, più settori", "Tutta Italia o le regioni che scegli, più settori"]}
+                valori={["Le tue parole, in una regione", "Le tue parole in tutta Italia o nelle regioni che scegli, con filtri per settore", "Le tue parole in tutta Italia o nelle regioni che scegli, con filtri per settore"]}
               />
               <Riga nome="Gare visibili per radar" valori={[`Le ${plans.free.daily_matches} più recenti`, "Tutte", "Tutte"]} />
-              <Riga nome="Filtri precisi: codici CPV e parole da escludere" valori={[false, true, true]} />
+              <Riga nome="Filtri precisi: settori, codici CPV e parole da escludere" valori={[false, true, true]} />
               <Riga nome="Gare preferite con promemoria a 30, 10 e 5 giorni dalla scadenza" valori={[false, true, true]} />
               {emailEnabled ? (
                 <Riga nome="Avvisi per email" valori={["Riepilogo ogni lunedì", "Ogni mattina", "Ogni mattina"]} />

@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
-import { subscribe, suggestCategory } from "@/lib/gc/api.functions";
-import { CATEGORIES, REGIONS } from "@/lib/gc/config";
+import { subscribe } from "@/lib/gc/api.functions";
+import { REGIONS } from "@/lib/gc/config";
 
 import { useSettings } from "./Page";
 
@@ -11,7 +11,6 @@ const ERRORS: Record<string, string> = {
   email: "Controlla l'indirizzo email: sembra incompleto.",
   company: "Scrivi il nome della tua impresa.",
   region: "Scegli la regione in cui lavori: il radar gratuito ne segue una.",
-  category: "Scegli il settore della tua impresa: il radar gratuito ne segue uno.",
   busy: "Ci sono troppe richieste in questo momento. Riprova tra qualche minuto.",
   closed: "Le iscrizioni non sono ancora aperte.",
 };
@@ -19,7 +18,6 @@ const ERRORS: Record<string, string> = {
 type Props = {
   q?: string;
   regione?: string;
-  settore?: string;
   origin: string;
   /** piano scelto nella pagina prezzi: dopo l'attivazione si apre subito l'acquisto */
   piano?: "pro" | "studio";
@@ -28,34 +26,12 @@ type Props = {
   id: string;
 };
 
-export function RadarForm({ q, regione, settore, origin, full = false, id, piano }: Props) {
+export function RadarForm({ q, regione, origin, full = false, id, piano }: Props) {
   const settings = useSettings();
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
   const [what, setWhat] = useState(q ?? "");
   const [place, setPlace] = useState(regione ?? "");
-  const [sector, setSector] = useState(settore ?? "");
-  // Il settore lo propone il sito dalle parole scritte, finché l'impresa non lo sceglie a mano.
-  const [sectorManuale, setSectorManuale] = useState(Boolean(settore));
-  const [suggerito, setSuggerito] = useState<string | null>(null);
-  const parole = (full ? what : (q ?? "")).trim();
-  useEffect(() => {
-    if (sectorManuale || parole.length < 3) return;
-    let vivo = true;
-    const timer = window.setTimeout(() => {
-      suggestCategory({ data: { q: parole } })
-        .then((r) => {
-          if (!vivo || !r.ok || !r.slug) return;
-          setSector(r.slug);
-          setSuggerito(r.name ?? null);
-        })
-        .catch(() => undefined);
-    }, 500);
-    return () => {
-      vivo = false;
-      window.clearTimeout(timer);
-    };
-  }, [parole, sectorManuale]);
   const [consent, setConsent] = useState(false);
   const [hp, setHp] = useState("");
   const [sending, setSending] = useState(false);
@@ -87,10 +63,6 @@ export function RadarForm({ q, regione, settore, origin, full = false, id, piano
       setError(ERRORS.region);
       return;
     }
-    if (!sector) {
-      setError(ERRORS.category);
-      return;
-    }
     if (!consent) {
       setError(ERRORS.consent);
       return;
@@ -103,7 +75,6 @@ export function RadarForm({ q, regione, settore, origin, full = false, id, piano
           company: company.trim(),
           q: (full ? what : (q ?? "")).trim() || undefined,
           regione: place || undefined,
-          settore: sector || undefined,
           consent,
           origin,
           hp,
@@ -164,55 +135,26 @@ export function RadarForm({ q, regione, settore, origin, full = false, id, piano
           required
         />
       </div>
-      <div className="gc-due-campi">
-        <div className="gc-campo">
-          <label htmlFor={`${id}-settore`}>Settore</label>
-          <select
-            id={`${id}-settore`}
-            className="gc-select"
-            value={sector}
-            onChange={(e) => {
-              setSector(e.target.value);
-              setSectorManuale(true);
-              setSuggerito(null);
-            }}
-            required
-            aria-describedby={suggerito ? `${id}-settore-aiuto` : undefined}
-          >
-            <option value="">Scegli il settore</option>
-            {CATEGORIES.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          {suggerito ? (
-            <span id={`${id}-settore-aiuto`} className="gc-aiuto">
-              Proposto dalle tue parole: è il settore in cui compaiono di più. Puoi cambiarlo.
-            </span>
-          ) : null}
-        </div>
-        <div className="gc-campo">
-          <label htmlFor={`${id}-dove`}>Regione in cui lavori</label>
-          <select
-            id={`${id}-dove`}
-            className="gc-select"
-            value={place}
-            onChange={(e) => setPlace(e.target.value)}
-            required
-          >
-            <option value="">Scegli la regione</option>
-            {REGIONS.map((r) => (
-              <option key={r.slug} value={r.slug}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="gc-campo">
+        <label htmlFor={`${id}-dove`}>Regione in cui lavori</label>
+        <select
+          id={`${id}-dove`}
+          className="gc-select"
+          value={place}
+          onChange={(e) => setPlace(e.target.value)}
+          required
+        >
+          <option value="">Scegli la regione</option>
+          {REGIONS.map((r) => (
+            <option key={r.slug} value={r.slug}>
+              {r.name}
+            </option>
+          ))}
+        </select>
       </div>
       <p className="gc-aiuto">
-        Il radar gratuito segue una regione e un settore. Con Pro segui tutta Italia, più settori e vedi
-        tutte le gare.
+        Il radar gratuito segue le tue parole in una regione. Con Pro segui tutta Italia, aggiungi settori
+        e codici CPV e vedi tutte le gare.
       </p>
       <div className="gc-campo">
         <label htmlFor={`${id}-email`}>La tua email di lavoro</label>
